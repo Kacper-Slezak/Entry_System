@@ -1,13 +1,13 @@
-FROM node:16-debian
+FROM node:16
 
-RUN mkdir node
+WORKDIR /app
 
-COPY . /node
-
-WORKDIR /node
+COPY package*.json ./
 
 RUN npm install
 
-EXPOSE 5000
+COPY . .
+
+EXPOSE 3000
 
 CMD ["npm", "start"]

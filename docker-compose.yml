@@ -13,7 +13,6 @@ services:
       - .env
     depends_on:
       - db
-  
 
   frontend:
     build:
@@ -26,6 +25,8 @@ services:
       - /app/node_modules
     env_file:
       - .env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
 
@@ -38,4 +39,6 @@ services:
       - .env
     volumes:
       - db_data:/var/lib/postgresql/data
-      
+
+volumes:
+  db_data:
