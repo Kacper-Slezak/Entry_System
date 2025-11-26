@@ -11,6 +11,8 @@ services:
       - ./backend:/app
     env_file:
       - .env
+    networks:
+      - app-network
     depends_on:
       - db
 
@@ -27,6 +29,8 @@ services:
       - .env
     environment:
       - CHOKIDAR_USEPOLLING=true
+    networks:
+      - app-network
     depends_on:
       - backend
 
@@ -35,10 +39,18 @@ services:
     restart: always
     ports:
       - "5432:5432"
-    env_file:
-      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-mydb}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  db_data:
+  postgres_data:
