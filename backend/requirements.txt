@@ -1,0 +1,15 @@
+# Requirements for the FastAPI project and AI functionalities
+fastapi
+uvicorn 
+fastapi-mail
+
+#database
+sqlalchemy
+psycopg2-binary>=2.9.11
+
+# AI and machine learning
+deepface
+tf-keras
+
+#QR codes
+qrcode
