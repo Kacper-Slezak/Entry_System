@@ -1,15 +1,36 @@
-# Requirements for the FastAPI project and AI functionalities
-fastapi
-uvicorn 
+# FastAPI Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
 fastapi-mail
 
-#database
-sqlalchemy
-psycopg2-binary>=2.9.11
+# Database
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.23
+alembic==1.12.1
+
+# Validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Environment
+python-dotenv==1.0.0
+
+# CORS
+python-multipart==0.0.6
+
+# Authentication (optional)
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utilities
+requests==2.31.0
+httpx==0.25.1
 
 # AI and machine learning
 deepface
 tf-keras
 
+
 #QR codes
 qrcode
+
