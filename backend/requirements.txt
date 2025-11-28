@@ -1,6 +1,7 @@
 # FastAPI Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+fastapi-mail
 
 # Database
 psycopg2-binary==2.9.9
@@ -24,3 +25,12 @@ passlib[bcrypt]==1.7.4
 # Utilities
 requests==2.31.0
 httpx==0.25.1
+
+# AI and machine learning
+deepface
+tf-keras
+
+
+#QR codes
+qrcode
+
