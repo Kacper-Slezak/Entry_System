@@ -9,7 +9,7 @@ def generate_qr_code(data: str) -> BytesIO:
         data (str): The data to encode in the QR code - UUID
 
     Returns:
-        bytes: The PNG image data of the generated QR code.
+        BytesIO: A BytesIO stream containing the PNG image of the QR code.
     """
     qr=qrcode.QRCode(
         version=1,
@@ -25,5 +25,5 @@ def generate_qr_code(data: str) -> BytesIO:
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
-    
+
     return img_byte_arr
