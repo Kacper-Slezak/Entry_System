@@ -2,7 +2,7 @@ import qrcode
 from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from io import BytesIO
 
-def generate_qr_code(data: str) -> bytes:
+def generate_qr_code(data: str) -> BytesIO:
     """Generate a QR code image in PNG format from the given data string.
 
     Args:
@@ -24,6 +24,6 @@ def generate_qr_code(data: str) -> bytes:
 
     img_byte_arr = BytesIO()
     img.save(img_byte_arr, format='PNG')
-    img_byte_arr = img_byte_arr.getvalue()
-
+    img_byte_arr.seek(0)
+    
     return img_byte_arr
