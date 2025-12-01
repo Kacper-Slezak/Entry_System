@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.api.admin_routes import adminRouter
+from backend.app.db.session import engine
+from backend.app.db import models
 
+models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 app.add_middleware(
