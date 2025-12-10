@@ -28,5 +28,3 @@ jobs:
 
             - name: run pre-commit hooks
               run: pre-commit run --all-files
-
-
