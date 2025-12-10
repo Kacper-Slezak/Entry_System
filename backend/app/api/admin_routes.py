@@ -14,6 +14,6 @@ async def qr_test(uuid_value: str):
     On address /admin/qr_test/{uuid_value} you will get a QR code image
     """
     qr_stream = generate_qr_code(text)
-    
+
 
     return Response(content=qr_stream.getvalue(), media_type="image/png")
