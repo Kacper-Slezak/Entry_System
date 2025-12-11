@@ -3,34 +3,38 @@ import sys
 import os
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
+
+# 1. SETUP PATH
+# Ensure the backend directory is in the python path
 sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
 
+# 2. SETUP ENV VARS
+# These must be set BEFORE importing app.main to pass validation in utils.py
 os.environ["MAIL_FROM"] = "test@example.com"
 os.environ["MAIL_USERNAME"] = "test@example.com"
 os.environ["MAIL_PASSWORD"] = "test_password"
 os.environ["MAIL_PORT"] = "587"
 os.environ["MAIL_SERVER"] = "smtp.test.com"
 
-from app.main import app
-from app.db.session import get_db
-
-# 1. Database override
+# 3. MOCK DB INIT & IMPORT APP
+# We mock 'create_all' to prevent app.main from trying to connect
+# to a non-existent database during the import.
 with patch("app.db.models.Base.metadata.create_all"):
     from app.main import app
     from app.db.session import get_db
 
-# Instead of connecting to the real Postgres, we substitute a mock (MagicMock)
+# 4. Database override
+# Instead of connecting to the real Postgres, we substitute a mock
 def override_get_db():
     try:
         db = MagicMock()
-        # Pretend that commit and refresh work and do nothing
         db.commit = MagicMock()
         db.refresh = MagicMock()
         yield db
     finally:
         pass
 
-# Override the dependency in the FastAPI application
+# Apply the override
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
