@@ -5,13 +5,14 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
 
-from app.main import app
-from app.db.session import get_db
-
-
 os.environ["MAIL_FROM"] = "test@example.com"
 os.environ["MAIL_USERNAME"] = "test@example.com"
 os.environ["MAIL_PASSWORD"] = "test_password"
+os.environ["MAIL_PORT"] = "587"
+os.environ["MAIL_SERVER"] = "smtp.test.com"
+
+from app.main import app
+from app.db.session import get_db
 
 # 1. Database override
 # Instead of connecting to the real Postgres, we substitute a mock (MagicMock)
