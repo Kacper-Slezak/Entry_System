@@ -27,7 +27,6 @@ requests==2.31.0
 httpx==0.25.1
 
 # AI and machine learning
-tensorflow-cpu
 deepface
 tf-keras
 numpy
