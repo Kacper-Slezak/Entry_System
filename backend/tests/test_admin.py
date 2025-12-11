@@ -1,8 +1,14 @@
 import pytest
+import sys
+import os
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
+sys.path.append(os.getcwd())
+
 from backend.app.main import app
 from backend.app.db.session import get_db
+
+
 
 # 1. Database override
 # Instead of connecting to the real Postgres, we substitute a mock (MagicMock)
