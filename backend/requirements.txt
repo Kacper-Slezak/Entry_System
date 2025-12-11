@@ -36,3 +36,7 @@ opencv-python-headless
 
 #QR codes
 qrcode
+
+
+# Testing
+pytest==7.4.0
