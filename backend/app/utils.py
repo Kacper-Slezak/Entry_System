@@ -48,11 +48,14 @@ conf = ConnectionConfig(
 
 async def send_qr_code_via_email(email: str, qr_code_stream: BytesIO):
     """
-    Docstring for send_qr_code_via_email
-    
-    :param email: Description
+    Sending an email with the QR code as an attachment.
+
+    Function packeges the Qr BytesIO stream into an UploadFile object and sends it as an email attachment.
+
+    Args:
+    :param email: Recipient email address
     :type email: str
-    :param qr_code_stream: Description
+    :param qr_code_stream: BytesIO stream containing the QR code image
     :type qr_code_stream: BytesIO
     """
     qr_code_file = UploadFile(file=qr_code_stream, filename="qrcode.png")
@@ -60,7 +63,7 @@ async def send_qr_code_via_email(email: str, qr_code_stream: BytesIO):
         subject="Witamy w firmie! Oto Twój kod QR",
         recipients=[email],
         body="W załączniku znajduje się Twój kod QR.",
-        subtype="html", 
+        subtype="html",
         attachments=[qr_code_file]
     )
     fm = FastMail(conf)
