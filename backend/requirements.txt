@@ -29,6 +29,8 @@ httpx==0.25.1
 # AI and machine learning
 deepface
 tf-keras
+numpy
+cv2
 
 
 #QR codes
