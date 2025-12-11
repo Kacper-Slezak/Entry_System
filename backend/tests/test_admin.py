@@ -9,6 +9,9 @@ from app.main import app
 from app.db.session import get_db
 
 
+os.environ["MAIL_FROM"] = "test@example.com"
+os.environ["MAIL_USERNAME"] = "test@example.com"
+os.environ["MAIL_PASSWORD"] = "test_password"
 
 # 1. Database override
 # Instead of connecting to the real Postgres, we substitute a mock (MagicMock)
