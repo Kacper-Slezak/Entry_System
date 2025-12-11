@@ -3,7 +3,7 @@ import sys
 import os
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
-sys.path.append(0, os.getcwd(), 'backend')
+sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
 
 from app.main import app
 from app.db.session import get_db
