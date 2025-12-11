@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Response
-from app.utils import generate_qr_code
-from app.utils import send_qr_code_via_email
+from fastapi import APIRouter, Response, Form, UploadFile, File, Depends
+from app.utils import generate_qr_code, send_qr_code_via_email
+from app.services.biometric_service import generate_face_embedding
+from sqlalchemy.orm import Session
+from app.db.models import Employee
+from app.db.session import get_db
 from io import BytesIO
 
 
@@ -24,3 +27,30 @@ async def qr_test(uuid_value: str, email: str = None):
 
 
     return Response(content=qr_stream.getvalue(), media_type="image/png")
+
+
+@adminRouter.post("/create_employee")
+async def create_employee(photo: UploadFile = File(...), name: str = Form(...), email: str = Form(...), db: Session = Depends(get_db)):
+    """
+    Endpoint to create a new employee.
+    """
+    photo_bytes = await photo.read()
+
+    embedding = generate_face_embedding(photo_bytes)
+
+    EmployeeRecord = Employee(
+        name=name,
+        email=email,
+        embedding=embedding,
+        is_active=True
+        )
+    db.add(EmployeeRecord)
+    db.commit()
+    db.refresh(EmployeeRecord)
+
+    uuid_value = str(EmployeeRecord.uuid)
+    qr_stream = generate_qr_code(uuid_value)
+
+    await send_qr_code_via_email(email, qr_stream)
+
+    return {"message": "Employee created successfully"}
