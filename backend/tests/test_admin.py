@@ -15,6 +15,10 @@ from app.main import app
 from app.db.session import get_db
 
 # 1. Database override
+with patch("app.db.models.Base.metadata.create_all"):
+    from app.main import app
+    from app.db.session import get_db
+
 # Instead of connecting to the real Postgres, we substitute a mock (MagicMock)
 def override_get_db():
     try:
