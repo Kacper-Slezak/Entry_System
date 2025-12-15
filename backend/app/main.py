@@ -4,6 +4,9 @@ from app.api.admin_routes import adminRouter
 from app.db.session import engine
 from app.db import models
 
+from dotenv import load_dotenv
+load_dotenv()
+
 models.Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
