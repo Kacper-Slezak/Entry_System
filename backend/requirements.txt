@@ -27,9 +27,14 @@ requests==2.31.0
 httpx==0.25.1
 
 # AI and machine learning
-deepface
 tf-keras
-
+numpy
+opencv-python-headless
+deepface
 
 #QR codes
 qrcode
+
+
+# Testing
+pytest==7.4.0
