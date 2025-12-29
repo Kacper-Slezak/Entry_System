@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  text-align: right;
 }
 
 .App-logo {
@@ -26,6 +26,35 @@
 
 .App-link {
   color: #61dafb;
+}
+
+/* Admin Panel Styles */
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.app-layout-inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  padding: 0;
+}
+
+.app-toggle-button {
+  font-size: 16px;
+  width: 64px;
+  height: 64px;
+}
+
+.app-content {
+  margin: 24px 16px;
+  padding: 24px;
+  min-height: 280px;
+  /* flex: 1; */
+  overflow: auto;
 }
 
 @keyframes App-logo-spin {
