@@ -4,18 +4,21 @@ import {
   MenuUnfoldOutlined,
   UploadOutlined,
   UserOutlined,
-  VideoCameraOutlined,
+  DashboardOutlined,
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
-import '../styling/App.css';
+import { Link } from 'react-router-dom';
+
 const { Header, Sider, Content } = Layout;
-const App = () => {
+
+const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
   return (
-    <Layout className="app-layout">
+    <Layout style={{ width: '100%', height: '100%' }}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="demo-logo-vertical" />
         <Menu
@@ -25,42 +28,49 @@ const App = () => {
           items={[
             {
               key: '1',
-              icon: <UserOutlined />,
-              label: 'nav 1',
+              icon: <DashboardOutlined />,
+              label: <Link to="/">Dashboard</Link>
             },
             {
               key: '2',
-              icon: <VideoCameraOutlined />,
-              label: 'nav 2',
+              icon: <UploadOutlined />,
+              label: <Link to="/add-employee">Add Employee</Link>,
             },
             {
               key: '3',
-              icon: <UploadOutlined />,
-              label: 'nav 3',
+              icon: <UserOutlined />,
+              label: <Link to="/employees">Employees</Link>,
             },
           ]}
         />
       </Sider>
-      <Layout className="app-layout-inner">
-        <Header className="app-header" style={{ background: colorBgContainer }}>
+      <Layout>
+        <Header style={{ padding: 0, background: colorBgContainer }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            className="app-toggle-button"
+            style={{
+              fontSize: '16px',
+              width: 64,
+              height: 64,
+            }}
           />
         </Header>
         <Content
-          className="app-content"
           style={{
+            margin: '24px 16px',
+            padding: 24,
+            minHeight: 280,
             background: colorBgContainer,
             borderRadius: borderRadiusLG,
           }}
         >
-          Content
+          {children}
         </Content>
       </Layout>
     </Layout>
   );
 };
-export default App;
+
+export default LayoutMain;
