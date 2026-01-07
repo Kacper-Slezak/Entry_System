@@ -5,9 +5,9 @@ from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from io import BytesIO
 import os
 from dotenv import load_dotenv
-from backend.app.core.security import get_password_hash
-from backend.app.db.session import SessionLocal
-from backend.app.db import models
+from app.core.security import get_password_hash
+from app.db.session import SessionLocal
+from app.db import models
 
 load_dotenv()
 
