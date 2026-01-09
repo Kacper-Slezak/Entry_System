@@ -6,9 +6,8 @@ from app.db.models import Employee, Admin
 from app.db.session import get_db
 from io import BytesIO
 
-from backend.app.core import security
-from backend.app import schemas
-from backend.app.db.session import get_db
+from app.core import security
+from app import schemas
 
 
 adminRouter = APIRouter(prefix="/admin", tags=["admin"])
