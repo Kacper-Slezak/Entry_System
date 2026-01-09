@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.admin_routes import adminRouter
 from app.db.session import engine
 from app.db import models
-from backend.app.utils import create_default_admin
+from app.utils import create_default_admin
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 

@@ -19,7 +19,8 @@ os.environ["MAIL_SERVER"] = "smtp.test.com"
 # 3. MOCK DB INIT & IMPORT APP
 # We mock 'create_all' to prevent app.main from trying to connect
 # to a non-existent database during the import.
-with patch("app.db.models.Base.metadata.create_all"):
+with patch("app.db.models.Base.metadata.create_all"), \
+     patch("app.utils.create_default_admin"):
     from app.main import app
     from app.db.session import get_db
 
