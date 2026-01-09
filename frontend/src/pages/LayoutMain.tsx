@@ -14,7 +14,7 @@ const { Header, Sider, Content } = Layout;
 const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer },
   } = theme.useToken();
 
   return (
@@ -29,7 +29,7 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
             {
               key: '1',
               icon: <DashboardOutlined />,
-              label: <Link to="/">Dashboard</Link>
+              label: <Link to="/">Logs</Link>
             },
             {
               key: '2',
@@ -57,15 +57,7 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
             }}
           />
         </Header>
-        <Content
-          style={{
-            margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
-          }}
-        >
+        <Content style={{  padding: '24px', margin: '24px', minHeight: 150 }}>
           {children}
         </Content>
       </Layout>
