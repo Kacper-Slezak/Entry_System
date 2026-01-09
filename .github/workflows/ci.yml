@@ -50,7 +50,8 @@ jobs:
 
       - name: Run Tests
         run: |
-          pytest backend/tests
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python -m pytest backend/tests
 
   build:
     runs-on: ubuntu-latest
