@@ -5,6 +5,9 @@ from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
 from io import BytesIO
 import os
 from dotenv import load_dotenv
+from app.core.security import get_password_hash
+from app.db.session import SessionLocal
+from app.db import models
 
 load_dotenv()
 
@@ -68,3 +71,23 @@ async def send_qr_code_via_email(email: str, qr_code_stream: BytesIO):
     )
     fm = FastMail(conf)
     await fm.send_message(message)
+
+def create_default_admin():
+    """
+    Checking if the admin is created in data base.
+    If not, it creates a new default admin account 'admin' with password 'admin123'.
+    """
+    db = SessionLocal()
+    try:
+        admin = db.query(models.Admin).first()
+        if not admin:
+            print("INFO: Tworzenie domyślnego konta administratora...")
+            default_admin = models.Admin(
+                username = "admin",
+                hashed_password = get_password_hash("admin123")
+            )
+            db.add(default_admin)
+            db.commit()
+            print("INFO: Utworzono konto administratora: admin / admin123")
+    finally:
+        db.close()

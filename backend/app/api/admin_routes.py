@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Response, Form, UploadFile, File, Depends
+from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File
+from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
-from sqlalchemy.orm import Session
-from app.db.models import Employee
+from app.db.models import Employee, Admin
 from app.db.session import get_db
 from io import BytesIO
+
+from app.core import security
+from app import schemas
 
 
 adminRouter = APIRouter(prefix="/admin", tags=["admin"])
@@ -29,6 +32,32 @@ async def qr_test(uuid_value: str, email: str = None):
     return Response(content=qr_stream.getvalue(), media_type="image/png")
 
 
+@adminRouter.post("/login", response_model=schemas.Token)
+async def login_for_access_token(
+        login_data: schemas.AdminLogin,
+        db: Session = Depends(get_db)
+):
+    """
+    Administartor Login:
+    1. Checks if the user exitsts in the database.
+    2. Verifies the password (hash).
+    3. Returns a JWT token.
+    """
+
+    admin = db.query(models.Admin).filter(models.Admin.username == login_data.username).first()
+
+    if not admin or not security.verify_password(login_data.password, admin.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Nieprawidłowy login lub hasło",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = security.create_access_token(
+        data={"sub": admin.username}
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
 @adminRouter.post("/create_employee")
 async def create_employee(photo: UploadFile = File(...), name: str = Form(...), email: str = Form(...), db: Session = Depends(get_db)):
     """
