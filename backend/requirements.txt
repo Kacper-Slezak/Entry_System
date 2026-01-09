@@ -32,6 +32,8 @@ tf-keras
 numpy
 opencv-python-headless
 deepface
+scpiy
+
 
 #QR codes
 qrcode
