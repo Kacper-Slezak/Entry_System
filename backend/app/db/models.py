@@ -11,6 +11,14 @@ class AccessLogStatus(str, enum.Enum):
     DENIED_QR = "DENIED_QR"
     DENIED_FACE = "DENIED_FACE"
 
+class Admin(Base):
+    __tablename__ = "admins"
+
+    id = Column(UUID, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+
+
 class Employee(Base):
     __tablename__ = "employees"
 
@@ -26,7 +34,7 @@ class Employee(Base):
     logs = relationship("AccessLog", back_populates="employee")
 
 class AccessLog(Base):
-    __tablename__ = "accesslogs"
+    __tablename__ = "access_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
