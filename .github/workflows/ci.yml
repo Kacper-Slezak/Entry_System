@@ -49,6 +49,8 @@ jobs:
           pip install pytest
 
       - name: Run Tests
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/test_db
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           python -m pytest backend/tests
