@@ -32,7 +32,7 @@ tf-keras
 numpy
 opencv-python-headless
 deepface
-scpiy
+scipy
 
 
 #QR codes

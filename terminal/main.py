@@ -4,7 +4,7 @@ import time
 import requests
 
 # API Configuration
-API_URL = "http://localhost:8000/api/v1/access-verify"
+API_URL = "http://localhost:8000/api/terminal/access-verify"
 
 def capture_image():
     # Initialize camera and QR detector
