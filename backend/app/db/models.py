@@ -14,7 +14,7 @@ class AccessLogStatus(str, enum.Enum):
 class Admin(Base):
     __tablename__ = "admins"
 
-    id = Column(UUID, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
 
