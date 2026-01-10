@@ -42,6 +42,9 @@ class AccessLog(Base):
     # Entry status
     status = Column(SqlEnum(AccessLogStatus), nullable=False)
 
+    # Reason of rejection
+    reason = Column(String, nullable=False)
+
     # Related key with employees table
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.uuid"), nullable=True)
 
