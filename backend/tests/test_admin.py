@@ -3,6 +3,9 @@ import sys
 import os
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
+from app.api.admin_routes import adminRouter
+from app.core.security import get_current_active_admin
+from app.db.models import Admin
 
 # 1. SETUP PATH
 sys.path.insert(0, os.path.join(os.getcwd(), 'backend'))
@@ -39,6 +42,13 @@ def override_get_db():
 app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
+
+alway_auth_admin = Admin(username="test_admin", is_active=True)
+
+async def override_get_current_admin():
+    return alway_auth_admin
+
+app.dependency_overrides[get_current_active_admin] = override_get_current_admin
 
 def test_health_check():
     response = client.get("/admin/health")
