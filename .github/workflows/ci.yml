@@ -52,7 +52,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/test_db
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
           python -m pytest backend/tests
 
   build:
