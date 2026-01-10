@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File
+from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
@@ -37,7 +37,7 @@ async def qr_test(uuid_value: str, email: str = None):
 @adminRouter.post("/login", response_model=schemas.Token)
 async def login_for_access_token(
         login_data: schemas.AdminLogin,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
 ):
     """
     Administrator Login:
@@ -63,10 +63,12 @@ async def login_for_access_token(
 
 @adminRouter.post("/create_employee")
 async def create_employee(
+    background_tasks: BackgroundTasks,
     photo: UploadFile = File(...),
     name: str = Form(...),
     email: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
 ):
     """
     Create a new employee.
@@ -92,7 +94,7 @@ async def create_employee(
     uuid_value = str(EmployeeRecord.uuid)
     qr_stream = generate_qr_code(uuid_value)
 
-    await send_qr_code_via_email(email, qr_stream)
+    background_tasks.add_task(send_qr_code_via_email, email, qr_stream)
 
     return {"message": "Employee created successfully"}
 
@@ -113,7 +115,7 @@ class EmployeeResponse(BaseModel):
 # --- CRUD ENDPOINTS ---
 
 @adminRouter.get("/employees", response_model=List[EmployeeResponse])
-async def get_all_employees(db: Session = Depends(get_db)):
+async def get_all_employees(db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
     """
     Get a list of all employees.
     This is used to populate the main table in the Admin Panel.
@@ -124,7 +126,7 @@ async def get_all_employees(db: Session = Depends(get_db)):
 
 
 @adminRouter.patch("/employees/{employee_uid}/toggle-access")
-async def toggle_employee_access(employee_uid: str, db: Session = Depends(get_db)):
+async def toggle_employee_access(employee_uid: str, db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
     """
     Enable or disable access for a specific employee.
     If set to False (Blocked), the employee cannot enter using QR or FaceID.
@@ -153,7 +155,8 @@ async def update_employee(
     name: Optional[str] = Form(None),
     email: Optional[str] = Form(None),
     photo: UploadFile = File(None),  # Optional new photo
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
 ):
     """
     Update employee details (Name, Email, Photo).
@@ -198,7 +201,7 @@ async def update_employee(
 
 
 @adminRouter.delete("/employees/{employee_uid}")
-async def delete_employee(employee_uid: str, db: Session = Depends(get_db)):
+async def delete_employee(employee_uid: str, db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
     """
     Permanently remove an employee and their biometric data from the database.
     This action cannot be undone.
