@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
 import { Link } from 'react-router-dom';
+import styles from '../styles/LayoutMain.module.css';
 
 const { Header, Sider, Content } = Layout;
 
@@ -18,13 +19,13 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   } = theme.useToken();
 
   return (
-    <Layout style={{ width: '100%', height: '100%' }}>
+    <Layout className={styles.layout}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['1']}
+          // defaultSelectedKeys={['1']}
           items={[
             {
               key: '1',
@@ -45,19 +46,15 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }}>
+        <Header className={styles.header} style={{ background: colorBgContainer }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: '16px',
-              width: 64,
-              height: 64,
-            }}
+            className={styles.toggleButton}
           />
         </Header>
-        <Content style={{  padding: '24px', margin: '24px', minHeight: 150 }}>
+        <Content className={styles.content}>
           {children}
         </Content>
       </Layout>
