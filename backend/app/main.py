@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.admin_routes import adminRouter
+from app.api.terminal_routes import terminalRouter
 from app.db.session import engine
 from app.db import models
 from app.utils import create_default_admin
@@ -28,3 +29,4 @@ app.add_middleware(
 )
 
 app.include_router(adminRouter)
+app.include_router(terminalRouter)

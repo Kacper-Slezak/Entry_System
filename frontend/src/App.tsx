@@ -3,7 +3,7 @@ import {BrowserRouter as Router, Routes, Route, } from "react-router-dom";
 // import routes from "./routes";
 import Dashboard from "./pages/Dashboard";
 import AddEmployee from "./pages/AddEmployee";
-import LayoutMain from "./pages/_layout";
+import LayoutMain from "./pages/LayoutMain";
 import Employees from "./pages/Employees";
 
 
