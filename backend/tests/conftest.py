@@ -1,8 +1,8 @@
 import pytest
 import sys
 import os
-from unittest.mock import MagicMock
-from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
+
 
 os.environ["MAIL_USERNAME"] = "test_user"
 os.environ["MAIL_PASSWORD"] = "test_password"
@@ -10,13 +10,21 @@ os.environ["MAIL_FROM"] = "admin@test.com"
 os.environ["MAIL_PORT"] = "587"
 os.environ["MAIL_SERVER"] = "localhost"
 os.environ["MAIL_FROM_NAME"] = "Test System"
+os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/dbname"
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.main import app
-from app.core.security import get_current_active_admin
-from app.db.session import get_db
-from app.db.models import Admin
+
+
+with patch("sqlalchemy.create_engine") as mock_create_engine:
+    mock_engine = MagicMock()
+    mock_create_engine.return_value = mock_engine
+
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.core.security import get_current_active_admin
+    from app.db.session import get_db
+    from app.db.models import Admin
 
 @pytest.fixture
 def mock_admin():
