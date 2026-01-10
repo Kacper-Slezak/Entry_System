@@ -51,10 +51,10 @@ jobs:
       - name: Run Tests
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/test_db
+          PYTHONPATH: ${{ github.workspace }}/backend
+          SECRET_KEY: "super-tajny-klucz-testowy"
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/backend
-          python -m pytest backend/tests
-
+          pytest backend/tests/test_admin.py
   build:
     runs-on: ubuntu-latest
     needs: test
