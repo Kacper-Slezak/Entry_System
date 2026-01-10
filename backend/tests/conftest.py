@@ -28,7 +28,7 @@ with patch("sqlalchemy.create_engine") as mock_create_engine:
 
 @pytest.fixture
 def mock_admin():
-    return Admin(id=1, username="test_admin", is_active=True)
+    return Admin(id=1, username="test_admin", hashed_password="hashed_test_password")
 
 @pytest.fixture
 def mock_db_session():
