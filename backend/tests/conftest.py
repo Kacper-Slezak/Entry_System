@@ -4,6 +4,13 @@ import os
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
+os.environ["MAIL_USERNAME"] = "test_user"
+os.environ["MAIL_PASSWORD"] = "test_password"
+os.environ["MAIL_FROM"] = "admin@test.com"
+os.environ["MAIL_PORT"] = "587"
+os.environ["MAIL_SERVER"] = "localhost"
+os.environ["MAIL_FROM_NAME"] = "Test System"
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.main import app
