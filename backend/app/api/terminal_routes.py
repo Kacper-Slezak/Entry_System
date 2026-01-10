@@ -51,13 +51,15 @@ async def verify_access(
     # Logic: If employee does not exist or is inactive -> Deny
     if not employee or not employee.is_active:
         logger.info(f"Access denied (QR): Unknown or inactive employee {employee_uid}")
+        reason_msg = "QR_INVALID_OR_INACTIVE"
         log = AccessLog(
             status=AccessLogStatus.DENIED_QR,
+            reason=reason_msg,
             employee_id=uid_obj if employee else None
         )
         db.add(log)
         db.commit()
-        return {"access": "DENIED", "reason": "QR_INVALID_OR_INACTIVE"}
+        return {"access": "DENIED", "reason": reason_msg}
 
     logger.info(f"QR Validated for employee: {employee.name}. Starting biometric check.")
 
@@ -74,14 +76,16 @@ async def verify_access(
 
         # Handle cases where no face is detected
         if new_embedding is None:
-            logger.warning(f"Biometrics failed: No face detected for {employee.name}")
+            reason_msg = "NO_FACE_DETECTED"
+            logger.warning(f"Biometrics failed: {reason_msg} for {employee.name}")
             log = AccessLog(
                 status=AccessLogStatus.DENIED_FACE,
+                reason=reason_msg,
                 employee_id=employee.uuid
             )
             db.add(log)
             db.commit()
-            return {"access": "DENIED", "reason": "NO_FACE_DETECTED"}
+            return {"access": "DENIED", "reason": reason_msg}
 
         # Compare with the stored biometric vector
         # Returns (is_match, distance)
@@ -94,6 +98,7 @@ async def verify_access(
             # SUCCESS
             log = AccessLog(
                 status=AccessLogStatus.GRANTED,
+                reason="Verification successful",
                 employee_id=employee.uuid
             )
             db.add(log)
@@ -105,16 +110,18 @@ async def verify_access(
             }
         else:
             # FACE DOES NOT MATCH
+            reason_msg = f"FACE_MISMATCH"
             logger.info(f"Access denied (Face): Distance {distance:.4f} too high for {employee.name}")
             log = AccessLog(
                 status=AccessLogStatus.DENIED_FACE,
+                reason=reason_msg,
                 employee_id=employee.uuid
             )
             db.add(log)
             db.commit()
             return {
                 "access": "DENIED",
-                "reason": "FACE_MISMATCH",
+                "reason": reason_msg,
                 "debug_distance": distance
             }
 
