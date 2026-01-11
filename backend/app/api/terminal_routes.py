@@ -21,20 +21,24 @@ async def verify_access(
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
-    Terminal Endpoint:
-    Verifies an employee's identity based on their QR UUID and a real-time face photo.
+    Verifies employee identity using a 2FA flow (QR Code + Face Recognition).
+
+    This endpoint validates the scanned QR UUID, checks the employee's status/expiry,
+    and performs a biometric comparison between the live photo and the stored template.
 
     Args:
-        employee_uid (str): The UUID string scanned from the QR code (via Form data).
-        file (UploadFile): The image file captured by the terminal camera.
-        db (Session): Database session dependency.
+        employee_uid (str): The unique identifier decoded from the employee's QR code.
+        file (UploadFile): Real-time image capture from the terminal camera.
+        db (Session): Database session provided by the dependency injection.
 
     Returns:
-        Dict[str, Any]: A JSON response containing:
-            - "access": "GRANTED" or "DENIED"
-            - "reason": Error code if denied (e.g., "FACE_MISMATCH")
-            - "name": Employee name (if granted)
-            - "debug_distance": The calculated cosine distance (for debugging purposes)
+        Dict[str, Any]: A dictionary containing:
+            - access (str): "GRANTED" if both factors pass, "DENIED" otherwise.
+            - reason (str, optional): The cause of denial (e.g., "FACE_MISMATCH").
+            - name (str, optional): Employee's full name if access is granted.
+
+    Note:
+        The biometric threshold is currently set to 0.3 for the Facenet512 model.
     """
 
     logger.info(f"Processing verification request for UUID: {employee_uid}")

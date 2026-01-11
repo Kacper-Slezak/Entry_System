@@ -72,11 +72,22 @@ async def create_employee(
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
     """
-    Create a new employee.
+    Registers a new employee in the system and triggers credentials delivery.
 
-    - Uploads a photo to generate a biometric embedding.
-    - Saves the employee to the database.
-    - Generates and sends a QR code via email.
+    The process includes:
+    1. Processing the photo to generate a 512-D biometric embedding.
+    2. Setting an default account expiration date (182 days).
+    3. Generating a unique QR code and sending it via email as a background task.
+
+    Args:
+        photo (UploadFile): Initial biometric reference photo.
+        name (str): Full name of the employee.
+        email (str): Contact email for QR code delivery.
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator performing the action.
+
+    Returns:
+        dict: Confirmation message on successful creation.
     """
     photo_bytes = await photo.read()
 
@@ -121,19 +132,48 @@ class EmployeeResponse(BaseModel):
 @adminRouter.get("/employees", response_model=List[EmployeeResponse])
 async def get_all_employees(db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
     """
-    Get a list of all employees.
-    This is used to populate the main table in the Admin Panel.
-    It returns employee details but excludes sensitive biometric data.
+    Retrieves a list of all registered employees.
+
+    Args:
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator performing the request.
+
+    Returns:
+        List[schemas.Employee]: A list of employee objects including their IDs,
+                                names, emails, and account status.
     """
+
     employees = db.query(Employee).all()
     return employees
 
 
-@adminRouter.patch("/employees/{employee_uid}/toggle-access")
-async def toggle_employee_access(employee_uid: str, db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
+@adminRouter.patch("/employees/{employee_uid}/status")
+async def update_employee_status(
+    employee_uid: str,
+    is_active: Optional[bool] = Form(None),
+    expiration_days: Optional[int] = Form(None),
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
+):
     """
-    Enable or disable access for a specific employee.
-    If set to False (Blocked), the employee cannot enter using QR or FaceID.
+    Updates the access status and expiration period for a specific employee.
+
+    This endpoint allows administrators to manually enable/disable access or
+    extend the QR code validity by a specific number of days.
+
+    Args:
+        employee_uid (str): Unique identifier (UUID) of the employee.
+        is_active (bool, optional): New activity status. If None, remains unchanged.
+        expiration_days (int, optional): Number of days from now to set as the new
+                                         expiration date.
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator.
+
+    Returns:
+        dict: Updated employee status and the new expiration timestamp.
+
+    Raises:
+        HTTPException: 404 if the employee is not found.
     """
     try:
         uid_obj = uuid.UUID(employee_uid)
@@ -144,13 +184,22 @@ async def toggle_employee_access(employee_uid: str, db: Session = Depends(get_db
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Toggle the boolean status
-    employee.is_active = not employee.is_active
+    # Update activity status if provided
+    if is_active is not None:
+        employee.is_active = is_active
+
+    # Update expiration date if days are provided
+    if expiration_days is not None:
+        employee.expires_at = datetime.now() + timedelta(days=expiration_days)
+
     db.commit()
     db.refresh(employee)
 
-    status_msg = "Active" if employee.is_active else "Blocked"
-    return {"message": f"Employee status changed to: {status_msg}", "is_active": employee.is_active}
+    return {
+        "message": "Employee status updated",
+        "is_active": employee.is_active,
+        "expires_at": employee.expires_at
+    }
 
 
 @adminRouter.put("/employees/{employee_uid}")
@@ -163,9 +212,22 @@ async def update_employee(
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
     """
-    Update employee details (Name, Email, Photo).
-    If a new photo is uploaded, the system will automatically re-calculate
-    the biometric embedding.
+    Updates an existing employee's profile information.
+
+    If a new photo is provided, the system automatically re-triggers the biometric
+    service to generate and update the facial embedding vector.
+
+    Args:
+        employee_uid (str): Unique identifier of the employee.
+        name (str, optional): New name to be assigned.
+        email (str, optional): New email address (must be unique).
+        photo (UploadFile, optional): New reference photo for biometric updates.
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator.
+
+    Raises:
+        HTTPException: 404 if employee not found, 400 if email is already in use
+                       or no face is detected in the new photo.
     """
     try:
         uid_obj = uuid.UUID(employee_uid)
@@ -207,8 +269,18 @@ async def update_employee(
 @adminRouter.delete("/employees/{employee_uid}")
 async def delete_employee(employee_uid: str, db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
     """
-    Permanently remove an employee and their biometric data from the database.
-    This action cannot be undone.
+    Permanently removes an employee and their associated data from the system.
+
+    This action will also remove the employee's biometric embeddings and access logs.
+    Revokes access immediately as the QR code associated with this ID will no longer be valid.
+
+    Args:
+        employee_id (int): The numeric ID of the employee to be deleted.
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator performing the action.
+
+    Returns:
+        dict: Success message upon deletion.
     """
     try:
         uid_obj = uuid.UUID(employee_uid)
