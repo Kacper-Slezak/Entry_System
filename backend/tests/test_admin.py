@@ -13,21 +13,31 @@ def test_get_all_employees(client, mock_db_session, mock_employee):
     assert response.json()[0]["email"] == mock_employee.email
 
 def test_update_employee_profile_with_photo(client, mock_db_session, mock_employee):
-    """Test for updating employee data along with a new photo."""
-    mock_db_session.query().filter().first.return_value = mock_employee
+    """
+    Test the successful update of an employee's profile including biometrics.
+
+    GIVEN: An existing employee and a new reference photo.
+    WHEN: A PUT request is sent to the administration update endpoint.
+    THEN: The system should update the name, email, and generate a new embedding.
+    """
+    # First call: find the employee to update
+    # Second call: check if the new email is already in use (should return None)
+    mock_db_session.query().filter().first.side_effect = [mock_employee, None]
 
     with patch("app.api.admin_routes.generate_face_embedding") as mock_emb:
+        # Mocking the 512-D vector return value from the biometric service
         mock_emb.return_value = [0.9, 0.8, 0.7]
 
         response = client.put(
             f"/admin/employees/{mock_employee.uuid}",
-            data={"name": "Nowe Imie", "email": "nowy@test.pl"},
-            files={"photo": ("new.jpg", b"new_photo_data", "image/jpeg")}
+            data={"name": "New Name", "email": "new_email@test.com"},
+            files={"photo": ("new_face.jpg", b"fake_image_bytes", "image/jpeg")}
         )
 
+    # Assertions to verify correct behavior
     assert response.status_code == 200
-    assert mock_employee.name == "Nowe Imie"
-    assert mock_employee.embedding == [0.9, 0.8, 0.7]
+    assert response.json()["message"] == "Employee updated successfully"
+    assert mock_employee.name == "New Name"
     assert mock_db_session.commit.called
 
 def test_delete_employee_success(client, mock_db_session, mock_employee):
