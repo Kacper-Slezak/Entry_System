@@ -31,6 +31,21 @@ def mock_admin():
     return Admin(id=1, username="test_admin", hashed_password="hashed_test_password")
 
 @pytest.fixture
+def mock_employee():
+    from app.db.models import Employee
+    import uuid
+    from datetime import datetime, timedelta
+
+    return Employee(
+        uuid=uuid.uuid4(),
+        name="Jan Kowalski",
+        email="jan@test.pl",
+        is_active=True,
+        expires_at=datetime.now() + timedelta(days=10),
+        embedding=[0.1, 0.2, 0.3]
+    )
+
+@pytest.fixture
 def mock_db_session():
     session = MagicMock()
     session.refresh.return_value = None
