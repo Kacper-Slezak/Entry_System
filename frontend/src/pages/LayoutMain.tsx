@@ -5,6 +5,7 @@ import {
   UploadOutlined,
   UserOutlined,
   DashboardOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
 import { Link } from 'react-router-dom';
@@ -40,6 +41,11 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
               key: '3',
               icon: <UserOutlined />,
               label: <Link to="/employees">Employees</Link>,
+            },
+            {
+              key: '4',
+              icon: <FileTextOutlined />,
+              label: <Link to="/logs">Logs</Link>,
             },
           ]}
         />
