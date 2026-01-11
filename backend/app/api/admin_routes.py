@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
@@ -37,7 +38,7 @@ async def qr_test(uuid_value: str, email: str = None):
 
 @adminRouter.post("/login", response_model=schemas.Token)
 async def login_for_access_token(
-        login_data: schemas.AdminLogin,
+        form_data: OAuth2PasswordRequestForm = Depends(),
         db: Session = Depends(get_db),
 ):
     """
@@ -46,9 +47,9 @@ async def login_for_access_token(
     2. Verifies the password (hash).
     3. Returns a JWT token.
     """
-    admin = db.query(Admin).filter(Admin.username == login_data.username).first()
+    admin = db.query(Admin).filter(Admin.username == form_data.username).first()
 
-    if not admin or not security.verify_password(login_data.password, admin.hashed_password):
+    if not admin or not security.verify_password(form_data.password, admin.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid login or password",
