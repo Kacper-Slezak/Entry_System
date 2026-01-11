@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
@@ -79,13 +80,16 @@ async def create_employee(
     """
     photo_bytes = await photo.read()
 
+    expiration_date = datetime.now() + timedelta(days=182)
+
     embedding = generate_face_embedding(photo_bytes)
 
     EmployeeRecord = Employee(
         name=name,
         email=email,
         embedding=embedding,
-        is_active=True
+        is_active=True,
+        expires_at=expiration_date
         )
     db.add(EmployeeRecord)
     db.commit()

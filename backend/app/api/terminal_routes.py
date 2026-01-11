@@ -1,3 +1,4 @@
+from datetime import datetime
 import uuid
 import logging
 from fastapi import APIRouter, Depends, UploadFile, File, Form
@@ -49,7 +50,7 @@ async def verify_access(
     employee = db.query(Employee).filter(Employee.uuid == uid_obj).first()
 
     # Logic: If employee does not exist or is inactive -> Deny
-    if not employee or not employee.is_active:
+    if not employee or not employee.is_active or (employee.expires_at and datetime.now() > employee.expires_at):
         logger.info(f"Access denied (QR): Unknown or inactive employee {employee_uid}")
         log = AccessLog(
             status=AccessLogStatus.DENIED_QR,
