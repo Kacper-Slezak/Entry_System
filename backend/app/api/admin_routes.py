@@ -1,13 +1,20 @@
+import io
+
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
-from app.db.models import Employee, Admin
+from app.db.models import Employee, Admin, AccessLog
 from app.db.session import get_db
 from io import BytesIO
 
 from app.core import security
 from app import schemas
+from app.schemas import AccessLogReport
+from typing import List, Optional
+from datetime import datetime, time, date
+import csv
+from fastapi.responses import StreamingResponse
 
 
 adminRouter = APIRouter(prefix="/admin", tags=["admin"])
@@ -58,6 +65,7 @@ async def login_for_access_token(
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
+
 @adminRouter.post("/create_employee")
 async def create_employee(photo: UploadFile = File(...), name: str = Form(...), email: str = Form(...), db: Session = Depends(get_db)):
     """
@@ -83,3 +91,79 @@ async def create_employee(photo: UploadFile = File(...), name: str = Form(...), 
     await send_qr_code_via_email(email, qr_stream)
 
     return {"message": "Employee created successfully"}
+
+
+@adminRouter.get("/logs", response_model=List[AccessLogReport])
+def get_logs(
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        status: Optional[str] = None,
+        db: Session = Depends(get_db)
+):
+    """
+    Downloads entry history. It can be filtered by a date or status.
+    """
+    query = db.query(AccessLog).order_by(AccessLog.timestamp.desc())
+
+    if start_date:
+        query = query.filter(AccessLog.timestamp >= datetime.combine(start_date, time.min))
+    if end_date:
+        query = query.filter(AccessLog.timestamp <= datetime.combine(end_date, time.max))
+
+    # Filtering by status
+    if status:
+        query = query.filter(AccessLog.status == status)
+
+    logs = query.all()
+
+    # Data mapping
+    results = []
+    for log in logs:
+        emp_name = log.employee.name if log.employee else "Unknown / Wrong QR code"
+        emp_email = log.employee.email if log.employee else "-"
+
+        results.append(AccessLogReport(
+            id=log.id,
+            timestamp=log.timestamp,
+            status=log.status,
+            reason=log.reason,
+            employee_name=emp_name,
+            employee_email=emp_email
+        ))
+
+    return results
+
+
+@adminRouter.get("/logs/export")
+def export_logs_csv(db: Session = Depends(get_db)):
+    """
+    Generates a .csv file with full history, which can be opened in Excel.
+    """
+    logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+
+    writer.writerow(["ID", "Date", "Hour", "Status", "Reason", "Worker Name", "Email"])
+
+    for log in logs:
+        emp_name = log.employee.name if log.employee else "Unknown"
+        emp_email = log.employee.email if log.employee else "-"
+
+        writer.writerow([
+            log.id,
+            log.timestamp.strftime("%Y-%m-%d"),
+            log.timestamp.strftime("%H:%M:%S"),
+            log.status.value,
+            log.reason,
+            emp_name,
+            emp_email
+        ])
+
+    output.seek(0)
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=raport_wejsc.csv"}
+    )
