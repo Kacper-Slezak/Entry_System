@@ -12,13 +12,14 @@ from app.db import models
 load_dotenv()
 
 def generate_qr_code(data: str) -> BytesIO:
-    """Generate a QR code image in PNG format from the given data string.
+    """
+    Generates a QR code image encoded in Base64 format.
 
     Args:
-        data (str): The data to encode in the QR code - UUID
+        data (str): The string data (usually a UUID) to be encoded into the QR code.
 
     Returns:
-        BytesIO: A BytesIO stream containing the PNG image of the QR code.
+        str: A Base64 string representation of the generated PNG image.
     """
     qr=qrcode.QRCode(
         version=1,
@@ -51,21 +52,25 @@ conf = ConnectionConfig(
 
 async def send_qr_code_via_email(email: str, qr_code_stream: BytesIO):
     """
-    Sending an email with the QR code as an attachment.
+    Sends an automated email to the employee containing their access QR code.
 
-    Function packeges the Qr BytesIO stream into an UploadFile object and sends it as an email attachment.
+    This function uses the system's SMTP configuration to deliver the QR code
+    as an attachment. It is usually executed as a background task to avoid
+    blocking the main API response.
 
     Args:
-    :param email: Recipient email address
-    :type email: str
-    :param qr_code_stream: BytesIO stream containing the QR code image
-    :type qr_code_stream: BytesIO
+        recipient_email (str): The employee's email address.
+        qr_image (BytesIO): The generated QR code image stream.
+
+    Note:
+        Configuration (SMTP server, ports, credentials) is loaded from
+        environment variables.
     """
     qr_code_file = UploadFile(file=qr_code_stream, filename="qrcode.png")
     message = MessageSchema(
-        subject="Witamy w firmie! Oto Twój kod QR",
+        subject="Welcome to FaceOn Entry System - Your Access QR Code",
         recipients=[email],
-        body="W załączniku znajduje się Twój kod QR.",
+        body="Your QR code is attached below.",
         subtype="html",
         attachments=[qr_code_file]
     )
@@ -81,13 +86,13 @@ def create_default_admin():
     try:
         admin = db.query(models.Admin).first()
         if not admin:
-            print("INFO: Tworzenie domyślnego konta administratora...")
+            print("INFO: Creating default admin account...")
             default_admin = models.Admin(
                 username = "admin",
                 hashed_password = get_password_hash("admin123")
             )
             db.add(default_admin)
             db.commit()
-            print("INFO: Utworzono konto administratora: admin / admin123")
+            print("INFO: Created default admin account: admin / admin123")
     finally:
         db.close()

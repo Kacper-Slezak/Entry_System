@@ -14,7 +14,7 @@ class AccessLogStatus(str, enum.Enum):
 class Admin(Base):
     __tablename__ = "admins"
 
-    id = Column(UUID, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
 
@@ -26,6 +26,7 @@ class Employee(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False, index=True)
     is_active = Column(Boolean, nullable=False)
+    expires_at = Column(DateTime, nullable=True)
 
     # PickleType permits saving lists/arrays from DeepFace
     embedding = Column(PickleType, nullable=True)
