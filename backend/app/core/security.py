@@ -26,7 +26,17 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Generated a JWT token with an expiration date."""
+    """
+    Generates a JWT (JSON Web Token) for administrator authentication.
+
+    Args:
+        data (dict): Payload containing the 'sub' (subject, e.g., username).
+        expires_delta (Optional[timedelta]): Custom expiration time.
+                                             Defaults to 15 minutes if None.
+
+    Returns:
+        str: Encoded JWT string.
+    """
     to_encode = data.copy()
 
     if expires_delta:
@@ -45,7 +55,17 @@ async def get_current_active_admin(
     db: Session = Depends(get_db)
 ) -> Admin:
     """
-    Dependency, które sprawdza czy token jest poprawny i czy admin istnieje.
+    Validates the JWT token and returns the current authenticated administrator.
+
+    Args:
+        token (str): The bearer token from the Authorization header.
+        db (Session): Database session.
+
+    Returns:
+        models.Admin: The admin user object if the token is valid and the user is active.
+
+    Raises:
+        HTTPException: 401 if credentials validation fails.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

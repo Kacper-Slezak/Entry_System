@@ -54,7 +54,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/backend
           SECRET_KEY: "super-tajny-klucz-testowy"
         run: |
-          pytest backend/tests/test_admin.py
+          pytest backend/tests
   build:
     runs-on: ubuntu-latest
     needs: test
