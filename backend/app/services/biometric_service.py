@@ -6,7 +6,7 @@ import logging
 
 # Configuration for DeepFace
 # RetinaFace is slower but much more accurate for detection.
-# Facenet512 provides 512-dimensional embeddings (requires re-indexing DB if changed).
+# Facenet512 provides 512-dimensional embeddings
 DETECTOR_BACKEND = 'retinaface'
 MODEL_NAME = 'Facenet512'
 
@@ -46,18 +46,18 @@ def generate_face_embedding(file_bytes: bytes) -> list:
 
 def verify_face(embedding_db: list, embedding_new: list, threshold: float = 0.3) -> tuple[bool, float]:
     """
-    Compares two face embedding vectors using cosine distance.
+    Compares two facial embedding vectors using Cosine Similarity.
 
     Args:
-        embedding_db (list): The facial embedding vector stored in the database.
-        embedding_new (list): The newly generated facial embedding vector from the camera.
-        threshold (float, optional): The maximum distance allowed for a match.
-                                     Lower values are stricter. Defaults to 0.3 for Facenet512.
+        embedding_db (list): The reference embedding stored in the PostgreSQL database.
+        embedding_new (list): The new embedding generated from the terminal's camera.
+        threshold (float): Similarity limit. Lower values increase security but may
+                           increase False Rejection Rate. Defaults to 0.3.
 
     Returns:
-        tuple[bool, float]: A tuple containing:
-            - bool: True if the faces match (distance < threshold), False otherwise.
-            - float: The calculated cosine distance between the embeddings.
+        tuple[bool, float]:
+            - bool: True if the calculated distance is below the threshold.
+            - float: The raw cosine distance between the two vectors.
     """
     if embedding_db is None or embedding_new is None:
         return False, 1.0

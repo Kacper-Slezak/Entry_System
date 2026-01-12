@@ -18,7 +18,20 @@ async def lifespan(app: FastAPI):
     create_default_admin()
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="FaceOn Entry System API",
+    description="""
+    ## Purpose
+    API for an advanced access control system utilizing two-factor authentication:
+    * **Possession**: QR Code generated per employee.
+    * **Inherence**: Biometric facial recognition using DeepFace.
+
+    ## Access
+    Most endpoints under `/admin` require a valid JWT Bearer Token.
+    """,
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
