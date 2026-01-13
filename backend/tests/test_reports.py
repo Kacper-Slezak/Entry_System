@@ -36,6 +36,8 @@ class FakeQuery:
 
     def offset(self, *args, **kwargs): return self
 
+    def group_by(self, *args, **kwargs): return self
+
     # Obsługa iteracji (gdyby kod robił: for x in query)
     def __iter__(self):
         return iter(self._items)
@@ -62,33 +64,38 @@ class FakeSession:
 
 # 2. KONFIGURACJA TESTU
 
-# Nadpisujemy zależność get_db w aplikacji, żeby używała naszego FakeSession
-# Zakładam standardową ścieżkę. Jeśli masz inną, Pytest i tak powinien
-# użyć override'a z conftest.py, ale dla pewności robimy to tu.
+# Tworzymy instancję naszej fałszywej sesji
 fake_session_instance = FakeSession()
 
 
-# WAŻNE: Wymuszamy, żeby aplikacja widziała naszą sesję
-# Szukamy dependency_overrides w aplikacji i podmieniamy.
-# (To zadziała, jeśli w main.py używasz get_db jako dependency)
+# WAŻNE: Wymuszamy, żeby aplikacja widziała naszą sesję.
+# Musimy nadpisać dependency injection w FastAPI.
+# Próbujemy znaleźć klucz 'get_db' w zależnościach aplikacji.
 def override_get_db():
-    yield fake_session_instance
+    try:
+        yield fake_session_instance
+    finally:
+        pass
 
 
-app.dependency_overrides[app.dependency_overrides.get("get_db", None)] = override_get_db
-# Jeśli powyższe nie zadziała (bo klucz jest inny), nadpisujemy globalnie w conftest,
-# ale tutaj działamy na instancji testowej.
+# Przeszukujemy dependency_overrides, żeby znaleźć właściwy klucz do nadpisania.
+# Jeśli w main.py używasz 'from .api import deps', to kluczem jest funkcja deps.get_db.
+# Tutaj stosujemy brute-force: nadpisujemy wszystkie zależności, które wyglądają na bazę danych.
+# (Najczęściej wystarczy przypisanie do app.dependency_overrides[get_db])
+
+# Ponieważ nie znam dokładnego importu get_db z Twojego main.py,
+# definiujemy clienta PONIŻEJ fixture'a, który to ustawi.
 
 client = TestClient(app)
 
 
 @pytest.fixture
 def sample_data():
-    # Czyścimy sesję przed testem
+    # 1. Czyścimy sesję przed testem
     fake_session_instance.store = []
     fake_session_instance.query_result = []
 
-    # Tworzymy dane
+    # 2. Tworzymy dane
     employee = models.Employee(
         name="Report Test User",
         email="report@test.com",
@@ -117,7 +124,7 @@ def sample_data():
         employee=None
     )
 
-    # KONFIGURACJA ODPOWIEDZI
+    # 3. KONFIGURACJA ODPOWIEDZI
     # Mówimy naszej fałszywej sesji: "Jak ktoś zapyta o dane, oddaj te dwa logi"
     fake_session_instance.query_result = [log_granted, log_denied]
 
@@ -125,10 +132,19 @@ def sample_data():
     fake_session_instance.logs = [log_granted, log_denied]
     fake_session_instance.denied_log = log_denied
 
-    # W tym podejściu musimy ręcznie wstrzyknąć naszą sesję do dependency overrides
-    # żeby mieć pewność 100%, że klient jej użyje.
-    # Zakładamy, że funkcja pobierająca bazę nazywa się 'get_db'.
-    # Jeśli nie wiesz gdzie ona jest, iterujemy po overrides.
+    # 4. NADPISANIE DEPENDENCY (Dependency Override)
+    # Musimy znaleźć funkcję get_db użytą w FastAPI.
+    # Spróbujemy ją zaimportować ze standardowych ścieżek.
+    try:
+        from backend.app.api.deps import get_db
+        app.dependency_overrides[get_db] = override_get_db
+    except ImportError:
+        try:
+            from backend.app.db.session import get_db
+            app.dependency_overrides[get_db] = override_get_db
+        except ImportError:
+            pass  # Jeśli importy nie działają, liczymy na to, że conftest już coś ustawił
+            # albo że poniższa pętla coś złapie.
 
     return employee
 
@@ -136,9 +152,6 @@ def sample_data():
 # 3. TESTY
 
 def test_get_logs_json(sample_data):
-    # Upewniamy się, że override jest aktywny
-    app.dependency_overrides[require_db_dependency] = lambda: fake_session_instance
-
     response = client.get("/admin/logs")
 
     assert response.status_code == 200
@@ -172,7 +185,7 @@ def test_get_logs_filtering(sample_data):
 
 
 def test_export_csv(sample_data):
-    # Resetujemy query result do wszystkich logów
+    # Resetujemy query result do wszystkich logów (bo poprzedni test mógł zmienić)
     fake_session_instance.query_result = fake_session_instance.logs
 
     response = client.get("/admin/logs/export")
@@ -183,8 +196,7 @@ def test_export_csv(sample_data):
 
     content = response.text
 
-    # Sprawdzamy nagłówki (CSV może być rozdzielany przecinkiem lub średnikiem)
-    #
+    # Sprawdzamy nagłówki
     assert (
             "ID;Date;Hour;Status;Reason;Worker Name;Email" in content
             or "ID,Date,Hour,Status,Reason,Worker Name,Email" in content
@@ -192,16 +204,3 @@ def test_export_csv(sample_data):
 
     assert "Report Test User" in content
     assert "Face does not match" in content
-
-
-# Helper function to find the dependency key for 'get_db' if possible
-def require_db_dependency():
-    pass  # Placeholder, właściwe nadpisanie robimy w teście lambda: fake_session_instance
-
-
-# Próba znalezienia właściwej funkcji get_db w dependency_overrides, żeby ją nadpisać
-# To jest "brute force" fix na wypadek gdyby conftest.py nie działał jak trzeba.
-for key in app.dependency_overrides.keys():
-    # Szukamy czegokolwiek co ma w nazwie "get_db" lub zwraca sesję
-    if hasattr(key, "__name__") and "get_db" in key.__name__:
-        app.dependency_overrides[key] = lambda: fake_session_instance
