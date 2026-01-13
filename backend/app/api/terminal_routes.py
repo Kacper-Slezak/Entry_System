@@ -131,5 +131,5 @@ async def verify_access(
         return {"access": "DENIED", "reason": "PROCESSING_ERROR"}
 
     finally:
-        # Ensure file is closed after reading
+
         await file.close()
