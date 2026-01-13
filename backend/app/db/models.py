@@ -35,7 +35,8 @@ class Employee(Base):
 
     #--- Relation to logs ---
     # logs = relationship("AccessLog", back_populates="employee")
-    logs = relationship("app.db.models.AccessLog", back_populates="employee")
+    # logs = relationship("app.db.models.AccessLog", back_populates="employee")
+    logs = relationship(lambda: AccessLog, back_populates="employee")
 
 class AccessLog(Base):
     __tablename__ = "access_logs"
@@ -55,4 +56,5 @@ class AccessLog(Base):
 
     # Relation back
     # employee = relationship("Employee", back_populates="logs")
-    employee = relationship("app.db.models.Employee", back_populates="logs")
+    # employee = relationship("app.db.models.Employee", back_populates="logs")
+    employee = relationship(Employee, back_populates="logs")
