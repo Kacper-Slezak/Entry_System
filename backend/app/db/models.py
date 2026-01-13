@@ -13,6 +13,7 @@ class AccessLogStatus(str, enum.Enum):
 
 class Admin(Base):
     __tablename__ = "admins"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -21,6 +22,7 @@ class Admin(Base):
 
 class Employee(Base):
     __tablename__ = "employees"
+    __table_args__ = {'extend_existing': True}
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
@@ -36,6 +38,7 @@ class Employee(Base):
 
 class AccessLog(Base):
     __tablename__ = "access_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
