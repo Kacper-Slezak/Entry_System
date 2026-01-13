@@ -48,7 +48,7 @@ async def verify_access(
     # 2. Fetch Employee
     employee = db.query(Employee).filter(Employee.uuid == uid_obj).first()
 
-    # Logic: If employee does not exist or is inactive -> Deny
+    # Logic:  If employee does not exist or is inactive -> Deny
     if not employee or not employee.is_active:
         logger.info(f"Access denied (QR): Unknown or inactive employee {employee_uid}")
         reason_msg = "QR_INVALID_OR_INACTIVE"
