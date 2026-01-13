@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from datetime import datetime
 from fastapi.testclient import TestClient
 from backend.app.main import app
@@ -42,35 +41,34 @@ def sample_data(mock_db_session):
     )
 
     # ==========================================
-    # 2. ROBUST MOCK CONFIGURATION
+    # 2. THE NUCLEAR SOLUTION: Custom Mock Class
     # ==========================================
+    class MockQuery:
+        def __init__(self, items):
+            self.items = items
 
-    # Create the master query mock object
-    query_mock = MagicMock()
+        def all(self):
+            return self.items
 
-    # Configure chaining: ensure all common SQLAlchemy methods return the same mock object
-    query_mock.join.return_value = query_mock
-    query_mock.outerjoin.return_value = query_mock
-    query_mock.filter.return_value = query_mock
-    query_mock.filter_by.return_value = query_mock
-    query_mock.order_by.return_value = query_mock
-    query_mock.group_by.return_value = query_mock
-    query_mock.limit.return_value = query_mock
-    query_mock.offset.return_value = query_mock
-    query_mock.distinct.return_value = query_mock
-    query_mock.options.return_value = query_mock
+        def first(self):
+            return self.items[0] if self.items else None
 
-    # Default behavior: return both logs
-    query_mock.all.return_value = [log_granted, log_denied]
+        def count(self):
+            return len(self.items)
 
-    # KEY FIX: Attach this specific mock to the session so tests can access it
-    mock_db_session.backend_query = query_mock
+        # The magic: any other attribute access returns a function that returns self
+        # This handles .filter(), .order_by(), .join(), .limit(), etc. automatically
+        def __getattr__(self, name):
+            return lambda *args, **kwargs: self
 
-    # Force db.query(...) to always return our configured query_mock
-    mock_db_session.query.side_effect = lambda *args, **kwargs: query_mock
+    # We force the db.query to return an instance of our MockQuery with our data
+    mock_db_session.query.side_effect = lambda *args, **kwargs: MockQuery([log_granted, log_denied])
 
     # Save references for use in tests
+    mock_db_session.all_logs = [log_granted, log_denied]
     mock_db_session.denied_log = log_denied
+    # Save the class so we can use it in filtering test
+    mock_db_session.MockQueryClass = MockQuery
 
     return employee
 
@@ -84,7 +82,6 @@ def test_get_logs_json(sample_data, mock_db_session):
     assert response.status_code == 200
     data = response.json()
 
-    # Should return 2 records
     assert len(data) >= 2
 
     found_granted = False
@@ -101,9 +98,9 @@ def test_get_logs_filtering(sample_data, mock_db_session):
     """
     Tests filtering logs by status.
     """
-    # CRITICAL FIX: We modify the SPECIFIC mock object stored in the fixture
-    # instead of trying to patch mock_db_session.query.return_value
-    mock_db_session.backend_query.all.return_value = [mock_db_session.denied_log]
+    # Override the side_effect to return only denied logs
+    mock_db_session.query.side_effect = lambda *args, **kwargs: mock_db_session.MockQueryClass(
+        [mock_db_session.denied_log])
 
     response = client.get("/admin/logs?status=DENIED_FACE")
 
