@@ -17,26 +17,41 @@ def sample_data(mock_db_session):
         embedding=None
     )
     mock_db_session.add(employee)
-    mock_db_session.commit()
-    mock_db_session.refresh(employee)
+
+    import uuid
+    employee_id = uuid.uuid4()
+
+    # mock_db_session.commit()
+    # mock_db_session.refresh(employee)
 
     log_granted = models.AccessLog(
         timestamp=datetime.utcnow(),
         status=AccessLogStatus.GRANTED,
         reason="Verification successful",
-        employee_id=employee.uuid
+        employee_id=employee.uuid,
+        employee=employee
     )
 
     log_denied = models.AccessLog(
         timestamp=datetime.utcnow(),
         status=AccessLogStatus.DENIED_FACE,
         reason="Face does not match",
-        employee_id=None
+        employee_id=None,
+        employee=None
     )
 
-    mock_db_session.add(log_granted)
-    mock_db_session.add(log_denied)
-    mock_db_session.commit()
+    # mock_db_session.add(log_granted)
+    # mock_db_session.add(log_denied)
+    # mock_db_session.commit()
+
+    # === KONFIGURACJA MOCKA (TO JEST KLUCZ DO SUKCESU) ===
+    # Mówimy mockowi: "Jak ktoś zapyta o .all(), zwróć tę listę"
+    mock_db_session.query.return_value.all.return_value = [log_granted, log_denied]
+
+    # Mówimy mockowi: "Jak ktoś użyje filtra (.filter().all()), zwróć tylko odrzucony log"
+    # (To uproszczenie dla testu filtrowania)
+    mock_db_session.query.return_value.filter.return_value.all.return_value = [log_denied]
+    # ====================================================
 
     return employee  # Return employee in case it is needed in assertions
 
