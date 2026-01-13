@@ -13,6 +13,7 @@ class AccessLogStatus(str, enum.Enum):
 
 class Admin(Base):
     __tablename__ = "admins"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid.uuid4)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -21,6 +22,7 @@ class Admin(Base):
 
 class Employee(Base):
     __tablename__ = "employees"
+    __table_args__ = {'extend_existing': True}
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
@@ -31,11 +33,14 @@ class Employee(Base):
     # PickleType permits saving lists/arrays from DeepFace
     embedding = Column(PickleType, nullable=True)
 
-    # Relation to logs
-    logs = relationship("AccessLog", back_populates="employee")
+    #--- Relation to logs ---
+    # logs = relationship("AccessLog", back_populates="employee")
+    # logs = relationship("app.db.models.AccessLog", back_populates="employee")
+    logs = relationship(lambda: AccessLog, back_populates="employee")
 
 class AccessLog(Base):
     __tablename__ = "access_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
@@ -43,8 +48,13 @@ class AccessLog(Base):
     # Entry status
     status = Column(SqlEnum(AccessLogStatus), nullable=False)
 
+    # Reason of rejection
+    reason = Column(String, nullable=False)
+
     # Related key with employees table
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.uuid"), nullable=True)
 
     # Relation back
-    employee = relationship("Employee", back_populates="logs")
+    # employee = relationship("Employee", back_populates="logs")
+    # employee = relationship("app.db.models.Employee", back_populates="logs")
+    employee = relationship(Employee, back_populates="logs")
