@@ -95,7 +95,6 @@ async def verify_access(
         logger.info(f"DEBUG: Comparison for {employee.name} | Distance: {distance:.4f} | Threshold: 0.3")
 
         if is_match:
-            # SUCCESS
             log = AccessLog(
                 status=AccessLogStatus.GRANTED,
                 reason="Verification successful",
@@ -109,7 +108,6 @@ async def verify_access(
                 "message": f"Welcome, {employee.name}"
             }
         else:
-            # FACE DOES NOT MATCH
             reason_msg = f"FACE_MISMATCH"
             logger.info(f"Access denied (Face): Distance {distance:.4f} too high for {employee.name}")
             log = AccessLog(
