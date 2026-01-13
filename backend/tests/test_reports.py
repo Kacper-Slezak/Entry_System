@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 from datetime import datetime
 from fastapi.testclient import TestClient
 from backend.app.main import app
@@ -10,7 +11,7 @@ client = TestClient(app)
 
 @pytest.fixture
 def sample_data(mock_db_session):
-    # 1. Create sample data
+    # 1. Tworzymy dane
     employee = models.Employee(
         name="Report Test User",
         email="report@test.com",
@@ -20,7 +21,6 @@ def sample_data(mock_db_session):
     import uuid
     employee.uuid = uuid.uuid4()
 
-    # We add to the mock just for consistency, though it doesn't store state
     mock_db_session.add(employee)
     mock_db_session.commit()
     mock_db_session.refresh(employee)
@@ -41,22 +41,31 @@ def sample_data(mock_db_session):
         employee=None
     )
 
-    # 2. ROBUST MOCK CONFIGURATION (The Fix)
+    # ==========================================
+    # 2. NAPRAWA MOCKA (Metoda "Chain of Eternity")
+    # ==========================================
 
-    # We grab the mock object that simulates the query
-    query_mock = mock_db_session.query.return_value
+    # Tworzymy jeden konkretny obiekt Mocka, który będzie udawał zapytanie
+    query_mock = MagicMock()
 
-    # CRITICAL: We tell the mock "No matter what method is called, return YOURSELF"
-    # This prevents the chain from breaking when .join() or .order_by() is called.
+    # Ustawiamy go tak, że jakakolwiek metoda łańcuchowa zwróci ten sam obiekt
     query_mock.join.return_value = query_mock
     query_mock.filter.return_value = query_mock
     query_mock.order_by.return_value = query_mock
     query_mock.limit.return_value = query_mock
+    query_mock.offset.return_value = query_mock
+    query_mock.group_by.return_value = query_mock
 
-    # Finally, when .all() is called on this persistent mock, return our data
+    # Na samym końcu, metoda .all() zwraca nasze dane
     query_mock.all.return_value = [log_granted, log_denied]
 
-    # Save specifically for the filtering test usage
+    # Podpinamy ten mock pod sesję bazy danych
+    # Nieważne czy aplikacja zrobi db.query() czy db.query(Model), dostanie nasz query_mock
+    mock_db_session.query.return_value = query_mock
+    mock_db_session.query.side_effect = lambda *args, **kwargs: query_mock
+
+    # Zapisujemy dane w sesji, żeby mieć do nich dostęp w testach
+    mock_db_session.all_logs = [log_granted, log_denied]
     mock_db_session.denied_log = log_denied
 
     return employee
@@ -71,7 +80,7 @@ def test_get_logs_json(sample_data, mock_db_session):
     assert response.status_code == 200
     data = response.json()
 
-    # Now chaining works, so we should see data
+    # Teraz łańcuch nie jest przerywany, więc mock zwróci dane
     assert len(data) >= 2
 
     found_granted = False
@@ -88,8 +97,8 @@ def test_get_logs_filtering(sample_data, mock_db_session):
     """
     Tests filtering logs by status.
     """
-    # Override the .all() return value JUST for this test case
-    # Since we configured filter() to return the query_mock, calling .all() checks this value
+    # Nadpisujemy wynik .all() tylko dla tego testu
+    # Pobieramy nasz główny query_mock i zmieniamy mu return_value
     mock_db_session.query.return_value.all.return_value = [mock_db_session.denied_log]
 
     response = client.get("/admin/logs?status=DENIED_FACE")
@@ -120,5 +129,6 @@ def test_export_csv(sample_data):
             or "ID,Date,Hour,Status,Reason,Worker Name,Email" in content
     )
 
+    # Skoro mock zwraca dane, te ciągi znaków też się pojawią
     assert "Report Test User" in content
     assert "Face does not match" in content
