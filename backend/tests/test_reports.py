@@ -9,16 +9,16 @@ client = TestClient(app)
 
 
 @pytest.fixture
-def sample_data(db_session):
+def sample_data(mock_db_session):
     employee = models.Employee(
         name="Report Test User",
         email="report@test.com",
         is_active=True,
         embedding=None
     )
-    db_session.add(employee)
-    db_session.commit()
-    db_session.refresh(employee)
+    mock_db_session.add(employee)
+    mock_db_session.commit()
+    mock_db_session.refresh(employee)
 
     log_granted = models.AccessLog(
         timestamp=datetime.utcnow(),
@@ -34,14 +34,14 @@ def sample_data(db_session):
         employee_id=None
     )
 
-    db_session.add(log_granted)
-    db_session.add(log_denied)
-    db_session.commit()
+    mock_db_session.add(log_granted)
+    mock_db_session.add(log_denied)
+    mock_db_session.commit()
 
     return employee  # Return employee in case it is needed in assertions
 
 
-def test_get_logs_json(sample_data, db_session):
+def test_get_logs_json(sample_data, mock_db_session):
     """
     Tests the GET /admin/logs endpoint (JSON table view).
     Verifies correct data formatting and checks whether the employee name is present.
