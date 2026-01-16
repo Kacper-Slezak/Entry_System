@@ -146,7 +146,7 @@ async def create_employee(
     return new_employee
 
 
-# --- CRUD ENDPOINTS (Slightly improved for consistency) ---
+# --- CRUD ENDPOINTS ---
 
 @adminRouter.get("/employees", response_model=List[EmployeeResponse])
 async def get_all_employees(
@@ -164,9 +164,7 @@ async def get_all_employees(
         List[schemas.Employee]: A list of employee objects including their IDs,
                                 names, emails, and account status.
     """
-
-    employees = db.query(Employee).all()
-    return employees
+    return db.query(Employee).all()
 
 
 @adminRouter.patch("/employees/{employee_uid}/status")
