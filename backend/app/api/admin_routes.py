@@ -63,75 +63,96 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@adminRouter.post("/create_employee")
-async def create_employee(
-    background_tasks: BackgroundTasks,
-    photo: UploadFile = File(...),
-    name: str = Form(...),
-    email: str = Form(...),
-    db: Session = Depends(get_db),
-    current_admin: Admin = Depends(security.get_current_active_admin)
-):
-    """
-    Registers a new employee in the system and triggers credentials delivery.
-
-    The process includes:
-    1. Processing the photo to generate a 512-D biometric embedding.
-    2. Setting an default account expiration date (182 days).
-    3. Generating a unique QR code and sending it via email as a background task.
-
-    Args:
-        photo (UploadFile): Initial biometric reference photo.
-        name (str): Full name of the employee.
-        email (str): Contact email for QR code delivery.
-        db (Session): Database session.
-        current_admin (Admin): Authenticated administrator performing the action.
-
-    Returns:
-        dict: Confirmation message on successful creation.
-    """
-    photo_bytes = await photo.read()
-
-    expiration_date = datetime.now() + timedelta(days=182)
-
-    embedding = generate_face_embedding(photo_bytes)
-
-    EmployeeRecord = Employee(
-        name=name,
-        email=email,
-        embedding=embedding,
-        is_active=True,
-        expires_at=expiration_date
-        )
-    db.add(EmployeeRecord)
-    db.commit()
-    db.refresh(EmployeeRecord)
-
-    uuid_value = str(EmployeeRecord.uuid)
-    qr_stream = generate_qr_code(uuid_value)
-
-    background_tasks.add_task(send_qr_code_via_email, email, qr_stream)
-
-    return {"message": "Employee created successfully"}
-
-
-# --- RESPONSE MODELS ---
-
 class EmployeeResponse(BaseModel):
     uuid: uuid.UUID
     name: str
     email: str
     is_active: bool
-    # We deliberately skip 'embedding' here to keep the response clean
+    expires_at: Optional[datetime]  # Added to allow frontend to see the expiration date
 
     class Config:
         from_attributes = True
 
 
-# --- CRUD ENDPOINTS ---
+# --- UPDATED CREATE ENDPOINT ---
+
+@adminRouter.post("/create_employee", response_model=EmployeeResponse)
+async def create_employee(
+    background_tasks: BackgroundTasks,
+    photo: UploadFile = File(...),
+    name: str = Form(...),
+    email: str = Form(...),
+    expiration_date: Optional[datetime] = Form(None), # Added optional custom expiration
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
+):
+    """
+    Registers a new employee and triggers credentials delivery.
+
+    Workflow:
+    1. Processes the photo to generate a 512-D biometric embedding.
+    2. Sets an account expiration date (defaults to 182 days if not provided).
+    3. Generates a unique QR code and sends it via email as a background task.
+
+    Args:
+        photo (UploadFile): Initial biometric reference photo.
+        name (str): Full name of the employee.
+        email (str): Contact email for QR code delivery.
+        expiration_date (datetime, optional): Specific timestamp for account expiration.
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator.
+
+    Returns:
+        EmployeeResponse: The newly created employee record.
+    """
+
+    # 1. Validate if email already exists before processing biometrics (performance optimization)
+    existing_employee = db.query(Employee).filter(Employee.email == email).first()
+    if existing_employee:
+        raise HTTPException(status_code=400, detail="An employee with this email already exists.")
+
+    # 2. Process Biometrics
+    photo_bytes = await photo.read()
+    embedding = generate_face_embedding(photo_bytes)
+
+    if embedding is None:
+        raise HTTPException(status_code=400, detail="No face detected in the provided photo.")
+
+    # 3. Handle Expiration Date
+    # If no date is provided by frontend, default to 182 days from now
+    if expiration_date is None:
+        expiration_date = datetime.now() + timedelta(days=182)
+
+    # 4. Create Database Record
+    new_employee = Employee(
+        name=name,
+        email=email,
+        embedding=embedding,
+        is_active=True,
+        expires_at=expiration_date
+    )
+
+    db.add(new_employee)
+    db.commit()
+    db.refresh(new_employee)
+
+    # 5. Handle QR Code generation and dispatch
+    uuid_value = str(new_employee.uuid)
+    qr_stream = generate_qr_code(uuid_value)
+
+    # We pass the stream to background task to keep the response time fast
+    background_tasks.add_task(send_qr_code_via_email, email, qr_stream)
+
+    return new_employee
+
+
+# --- CRUD ENDPOINTS (Slightly improved for consistency) ---
 
 @adminRouter.get("/employees", response_model=List[EmployeeResponse])
-async def get_all_employees(db: Session = Depends(get_db), current_admin: Admin = Depends(security.get_current_active_admin)):
+async def get_all_employees(
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
+):
     """
     Retrieves a list of all registered employees.
 
