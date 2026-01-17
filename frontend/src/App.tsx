@@ -17,7 +17,7 @@ function App() {
             <Route path="/" element={<LoginPage />} />
             <Route path="logs" element={<ProtectedRoute><LayoutMain><Logs /></LayoutMain></ProtectedRoute>} />
             <Route path="add-employee" element={<ProtectedRoute><LayoutMain><AddEmployee /></LayoutMain></ProtectedRoute>} />
-            <Route path="employees" element={<ProtectedRoute><LayoutMain><Employees /></LayoutMain></ProtectedRoute>} />
+            <Route path="employees" element={<ProtectedRoute><LayoutMain><EmployeesPage /></LayoutMain></ProtectedRoute>} />
             <Route path="edit-employee/:uuid" element={<ProtectedRoute><LayoutMain><EditEmployee /></LayoutMain></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" />} />
         </Routes>

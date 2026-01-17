@@ -8,11 +8,11 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const token = Cookies.get('accessToken');
+  const token = Cookies.get('access_token');
 
   if (!token) {
     // No token found, redirect to login
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
     message.error("Session expired. Please log in again.");
   }
 

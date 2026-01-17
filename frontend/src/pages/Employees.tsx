@@ -9,6 +9,8 @@ import {fetchEmployees} from "../services/api";
 import dayjs from 'dayjs';
 import EmployeeActions from '../components/EmployeePageActions';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import { fetchEmployeesList } from '../services/api';
 
 type DataIndex = keyof EmployeeDataType;
 
@@ -38,27 +40,16 @@ const EmployeesPage: React.FC = () => {
   const searchInput = useRef<InputRef>(null);
   const navigate = useNavigate();
 
+  
+  const loadData = async () => {
+    const data = await fetchEmployeesList();
+    setEmployees(data);
+    setLoading(false);
+  };
 
   // ---------Fething Employees List on Component Mount---------
   useEffect(() => {
-  const token = localStorage.getItem('access_token'); // Get token from storage
-  
-  if (!token) {
-    message.error('No authentication token found');
-    setLoading(false);
-    return;
-  }
-
-  fetchEmployees(token)
-    .then(data => {
-      setEmployees(data);
-      setLoading(false);
-    })
-    .catch(error => {
-      console.error('Error fetching employees:', error);
-      message.error('Failed to load employees');
-      setLoading(false);
-    });
+  loadData();
 }, []);
 
   const handleEdit = (record: EmployeeDataType) => {
@@ -180,7 +171,7 @@ const EmployeesPage: React.FC = () => {
       key: 'is_active',
       width: '5%',
       ...getColumnSearchProps('is_active'),
-      render: (text: string) => text === 'true' ? 'Yes' : 'No',
+      render: (isActive: boolean) => isActive ? 'Yes' : 'No',
     },
     {
       title: 'Expiration Date',
@@ -198,14 +189,14 @@ const EmployeesPage: React.FC = () => {
     {
     title: 'Action',
     key: 'action',
-    width: '30%',
+    width: '15%',
     render: (_: any, record: EmployeeDataType) => (
       <EmployeeActions
         record={record}
         onEdit={handleEdit}
         onDeleteSuccess={() => {
           // Refresh list
-          // fetchEmployeesList();
+          loadData();
         }}
       />
     ),
@@ -215,7 +206,7 @@ const EmployeesPage: React.FC = () => {
 
   return( 
     <Spin spinning={loading}>
-      <Table<EmployeeDataType> columns={columns} dataSource={mockEmployees} />
+      <Table<EmployeeDataType> columns={columns} dataSource={employees} />
     </Spin>
   );
 };

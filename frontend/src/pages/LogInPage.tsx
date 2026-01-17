@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
       }
         const data = await response.json();
 
-      Cookies.set('accessToken', data.accessToken, {
+      Cookies.set('access_token', data.access_token, {
         expires: data.expiresIn ? data.expiresIn / (24 * 60 * 60) : 1/24, // 1 hour default
         secure: true,
         sameSite: 'strict',

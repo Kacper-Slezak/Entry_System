@@ -5,6 +5,7 @@ import type { FormValues, EmployeeDataType } from '../types';
 import { updateEmployee } from '../services/api';
 import EmployeeForm from '../components/EmployeeForm';
 import styles from '../styles/AddEmployee.module.css';
+import Cookies from 'js-cookie';
 
 const EditEmployee: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -27,7 +28,7 @@ const EditEmployee: React.FC = () => {
   const handleFormSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = Cookies.get('access_token');
 
       if (!token || !uuid) {
         message.error('Missing required token or employee ID');
@@ -37,6 +38,7 @@ const EditEmployee: React.FC = () => {
       const formData = new FormData();
       if (values.name) formData.append('name', values.name);
       if (values.email) formData.append('email', values.email);
+      if (values.expirationTime) formData.append('expirationTime', values.expirationTime.toISOString());
 
       if (values.photo && values.photo.length > 0) {
         const file = (values.photo[0] as any).originFileObj;
@@ -48,6 +50,7 @@ const EditEmployee: React.FC = () => {
       await updateEmployee(uuid, formData, token);
       message.success('Employee updated successfully');
       navigate('/employees');
+      
     } catch (error) {
       console.error('Error:', error);
       throw error;

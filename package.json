@@ -8,7 +8,7 @@
     "@types/js-cookie": "^3.0.6",
     "@types/react": "^19.2.7",
     "@types/react-cookies": "^0.1.4",
-    "js-cookie": "^3.0.5",
-    "@types/react-highlight-words": "^0.20.1"
+    "@types/react-highlight-words": "^0.20.1",
+    "js-cookie": "^3.0.5"
   }
 }

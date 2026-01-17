@@ -1,8 +1,9 @@
 import React from 'react';
 import { Space, Button, Popconfirm, message } from 'antd';
-import { EditOutlined, DeleteOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { EmployeeDataType } from '../types';
 import { deleteEmployee } from '../services/api';
+import Cookies from 'js-cookie';
 
     interface EmployeeActionsProps {
     record: EmployeeDataType;
@@ -17,7 +18,7 @@ const EmployeeActions: React.FC<EmployeeActionsProps> = ({
 }) => {
   const handleDelete = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = Cookies.get('access_token');
       if (!token) {
         message.error('No authentication token');
         return;
@@ -56,12 +57,6 @@ const EmployeeActions: React.FC<EmployeeActionsProps> = ({
           Delete
         </Button>
       </Popconfirm>
-      <Button 
-          size="small" 
-          icon={<FieldTimeOutlined />}
-        >
-          Expiration Time
-      </Button>
     </Space>
   );
 };

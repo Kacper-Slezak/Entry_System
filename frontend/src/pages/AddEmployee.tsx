@@ -4,14 +4,18 @@ import type { FormValues } from '../types';
 import { createEmployee } from '../services/api';
 import EmployeeForm from '../components/EmployeeForm';
 import styles from '../styles/AddEmployee.module.css';
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
 
 const AddEmployee: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(false);
+  const navigate = useNavigate();
 
   const handleFormSubmit = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = Cookies.get('access_token');
 
       if (!token) {
         message.error('No authentication token found');
@@ -21,12 +25,15 @@ const AddEmployee: React.FC = () => {
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('email', values.email);
+      formData.append('expiration_date', dayjs(values.expirationTime).toISOString());
 
       values.photo?.forEach((fileItem: any) => {
         formData.append('photo', fileItem.originFileObj);
       });
 
       await createEmployee(formData, token);
+      message.success('Employee added successfully');
+      navigate('/employees');
     } catch (error) {
       console.error('Error:', error);
       throw error;

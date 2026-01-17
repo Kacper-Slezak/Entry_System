@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Button,
+  DatePicker,
   Form,
   Input,
   Upload,
@@ -11,6 +12,7 @@ import type { FormValues, EmployeeDataType } from '../types';
 import styles from '../styles/AddEmployee.module.css';
 
 
+
 interface EmployeeFormProps {
   initialData?: EmployeeDataType;
   onFinish: (values: FormValues) => Promise<void>;
@@ -19,6 +21,7 @@ interface EmployeeFormProps {
   formRules?: {
     name?: any[];
     email?: any[];
+    expirationTime?: any[];
     photo?: any[];
   };
 }
@@ -42,6 +45,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
   formRules = {
     name: [{ required: false}],
     email: [{ required: false}],
+    expirationTime: [{ required: false}],
     photo: [{ required: false}],
   },
 }) => {
@@ -93,6 +97,13 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
         rules={formRules.email}
       >
         <Input />
+      </Form.Item>
+      <Form.Item
+        label="Expiration Date"
+        name="expiration_date"
+        rules={formRules.expirationTime}
+      >
+        <DatePicker showTime/>
       </Form.Item>
       <Form.Item
           name="photo"

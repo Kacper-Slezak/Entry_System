@@ -82,7 +82,7 @@ async def create_employee(
     photo: UploadFile = File(...),
     name: str = Form(...),
     email: str = Form(...),
-    expiration_date: Optional[datetime] = Form(None), # Added optional custom expiration
+    expiration_date: Optional[str] = Form(None), # Added optional custom expiration
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -120,15 +120,24 @@ async def create_employee(
 
     # 3. Handle Expiration Date
     # If no date is provided by frontend, default to 182 days from now
+    
     if expiration_date is None:
         expiration_date = datetime.now() + timedelta(days=182)
+    else:
+        clean_date = expiration_date.replace("Z", "+00:00")
+        expiration_date = datetime.fromisoformat(clean_date)
+
+    if expiration_date <= datetime.now():
+        raise HTTPException(status_code=400, detail="Expiration date must be in the future.")
+    if expiration_date == datetime.now():
+        is_active_1 = False
 
     # 4. Create Database Record
     new_employee = Employee(
         name=name,
         email=email,
         embedding=embedding,
-        is_active=True,
+        is_active=is_active_1,
         expires_at=expiration_date
     )
 
@@ -233,7 +242,7 @@ async def update_employee(
     email: Optional[str] = Form(None),
     photo: UploadFile = File(None),
     is_active: Optional[bool] = Form(None),
-    expiration_date: Optional[datetime] = Form(None),
+    expiration_date: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -287,7 +296,10 @@ async def update_employee(
         employee.is_active = is_active
 
     if expiration_date is not None:
+        clean_date = expiration_date.replace("Z", "+00:00")
+        expiration_date = datetime.fromisoformat(clean_date)
         employee.expires_at = expiration_date
+        
 
     # 3. Handle photo upload and biometric embedding update
     if photo:
