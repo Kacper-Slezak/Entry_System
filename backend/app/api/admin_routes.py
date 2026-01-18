@@ -82,7 +82,7 @@ async def create_employee(
     photo: UploadFile = File(...),
     name: str = Form(...),
     email: str = Form(...),
-    expiration_date: Optional[datetime] = Form(None), # Added optional custom expiration
+    expiration_date: Optional[str] = Form(None), # Added optional custom expiration
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -106,7 +106,7 @@ async def create_employee(
         EmployeeResponse: The newly created employee record.
     """
 
-    # 1. Validate if email already exists before processing biometrics (performance optimization)
+    # 1. Validate if email already exists
     existing_employee = db.query(Employee).filter(Employee.email == email).first()
     if existing_employee:
         raise HTTPException(status_code=400, detail="An employee with this email already exists.")
@@ -118,10 +118,20 @@ async def create_employee(
     if embedding is None:
         raise HTTPException(status_code=400, detail="No face detected in the provided photo.")
 
-    # 3. Handle Expiration Date
-    # If no date is provided by frontend, default to 182 days from now
-    if expiration_date is None:
-        expiration_date = datetime.now() + timedelta(days=182)
+    # 3. Handle Expiration Date (Logic moved here to handle string parsing safely)
+    final_expiration_date = None
+
+    if expiration_date:
+        try:
+            final_expiration_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
+            )
+
+    if final_expiration_date is None:
+        final_expiration_date = datetime.now() + timedelta(days=182)
 
     # 4. Create Database Record
     new_employee = Employee(
@@ -129,7 +139,7 @@ async def create_employee(
         email=email,
         embedding=embedding,
         is_active=True,
-        expires_at=expiration_date
+        expires_at=final_expiration_date
     )
 
     db.add(new_employee)
@@ -140,7 +150,6 @@ async def create_employee(
     uuid_value = str(new_employee.uuid)
     qr_stream = generate_qr_code(uuid_value)
 
-    # We pass the stream to background task to keep the response time fast
     background_tasks.add_task(send_qr_code_via_email, email, qr_stream)
 
     return new_employee
@@ -171,7 +180,7 @@ async def get_all_employees(
 async def update_employee_status(
     employee_uid: str,
     is_active: Optional[bool] = Form(None),
-    expiration_date: Optional[datetime] = Form(None),
+    expiration_date: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -212,9 +221,15 @@ async def update_employee_status(
     if is_active is not None:
         employee.is_active = is_active
 
-    # Update expiration to a specific date/time if provided
     if expiration_date is not None:
-        employee.expires_at = expiration_date
+        try:
+            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            employee.expires_at = parsed_date
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
+            )
 
     db.commit()
     db.refresh(employee)
@@ -233,7 +248,7 @@ async def update_employee(
     email: Optional[str] = Form(None),
     photo: UploadFile = File(None),
     is_active: Optional[bool] = Form(None),
-    expiration_date: Optional[datetime] = Form(None),
+    expiration_date: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -276,7 +291,6 @@ async def update_employee(
         employee.name = name
 
     if email:
-        # Verify that the new email is not already claimed by another employee
         existing = db.query(Employee).filter(Employee.email == email, Employee.uuid != uid_obj).first()
         if existing:
             raise HTTPException(status_code=400, detail="Email already in use by another employee")
@@ -286,14 +300,21 @@ async def update_employee(
     if is_active is not None:
         employee.is_active = is_active
 
+    # ZMIANA: Ręczne, bezpieczne parsowanie daty ze stringa
     if expiration_date is not None:
-        employee.expires_at = expiration_date
+        try:
+            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            employee.expires_at = parsed_date
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
+            )
 
     # 3. Handle photo upload and biometric embedding update
     if photo:
         photo_bytes = await photo.read()
         if photo_bytes:
-            # Generate new biometric vector using the specialized service
             new_embedding = generate_face_embedding(photo_bytes)
 
             if new_embedding is None:
