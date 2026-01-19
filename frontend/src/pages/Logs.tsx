@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Table, Tag, Button, Input, Space, message, Card } from 'antd';
 import { DownloadOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 
 interface LogEntry {
   id: number;
@@ -21,8 +20,6 @@ const Logs: React.FC = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      // NOTE: Make sure the JWT token is stored in localStorage under the key 'access_token'
-      // If the key name is different (e.g. 'token'), update this line accordingly
       const token = localStorage.getItem('access_token');
 
       const response = await fetch('http://localhost:8000/admin/logs', {
@@ -44,7 +41,6 @@ const Logs: React.FC = () => {
 
       const data = await response.json();
 
-      // Add a required "key" field for Ant Design Table
       const formattedData = data.map((item: LogEntry) => ({
         ...item,
         key: item.id.toString(),
@@ -80,21 +76,27 @@ const Logs: React.FC = () => {
         throw new Error('Export error');
       }
 
-      // Support binary file download (CSV stream)
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
 
-      // File name with timestamp
-      link.download = `access_report_${dayjs().format('YYYY-MM-DD_HH-mm')}.csv`;
+      // Generating a Filename Using the Native Date Object
+      const now = new Date();
+      // Form: YYYY-MM-DD_HH-MM
+      const dateStr = now.toISOString().slice(0, 10);
+      const timeStr = now.toTimeString().slice(0, 5).replace(':', '-');
+
+      link.download = `access_report_${dateStr}_${timeStr}.csv`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
 
       message.success({ content: 'CSV file downloaded', key: 'exportMsg' });
     } catch (error) {
-      message.error({ content: 'Failed to download export file', key: 'exportMsg' });
+        console.error(error);
+        message.error({ content: 'Failed to download export file', key: 'exportMsg' });
     }
   };
 
@@ -113,7 +115,18 @@ const Logs: React.FC = () => {
       width: 180,
       sorter: (a, b) =>
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-      render: (text) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
+      render: (text) => {
+
+        if (!text) return '-';
+        return new Date(text).toLocaleString('pl-PL', {
+             year: 'numeric',
+             month: '2-digit',
+             day: '2-digit',
+             hour: '2-digit',
+             minute: '2-digit',
+             second: '2-digit'
+        });
+      },
     },
     {
       title: 'Status',
@@ -161,7 +174,6 @@ const Logs: React.FC = () => {
       title: 'Reason / Details',
       dataIndex: 'reason',
       key: 'reason',
-      // Client-side search filter
       filteredValue: searchText ? [searchText] : null,
       onFilter: (value, record) => {
         const search = (value as string).toLowerCase();

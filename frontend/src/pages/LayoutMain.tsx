@@ -8,15 +8,26 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const { Header, Sider, Content } = Layout;
 
 const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  // Mapowanie ścieżek do kluczy menu, aby podświetlał się aktywny element
+  const getSelectedKey = () => {
+    const path = location.pathname;
+    if (path === '/') return ['1'];
+    if (path === '/add-employee') return ['2'];
+    if (path === '/employees') return ['3'];
+    if (path === '/logs') return ['4'];
+    return ['1'];
+  };
 
   return (
     <Layout style={{ width: '100%', height: '100%' }}>
@@ -25,7 +36,7 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['1']}
+          selectedKeys={getSelectedKey()}
           items={[
             {
               key: '1',
