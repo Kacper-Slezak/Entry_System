@@ -292,33 +292,19 @@ async def update_employee(
     if name:
         employee.name = name
 
-    if email:
-        existing = db.query(Employee).filter(Employee.email == email, Employee.uuid != uid_obj).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="Email already in use")
+    if email and email != employee.email:
         employee.email = email
         needs_new_qr = True
 
     if is_active is not None:
         employee.is_active = is_active
 
-    # ZMIANA: Ręczne, bezpieczne parsowanie daty ze stringa
-    if expiration_date is not None:
-        try:
-            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
-            employee.expires_at = parsed_date
-        except ValueError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
-            )
-
     if expiration_date and expiration_date.strip():
         try:
             parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
             employee.expires_at = parsed_date
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid date: {expiration_date}")
+            raise HTTPException(status_code=400, detail="Invalid date format")
 
     if photo:
         photo_bytes = await photo.read()
@@ -327,6 +313,7 @@ async def update_employee(
             if new_embedding:
                 employee.embedding = new_embedding
                 needs_new_qr = True
+
     db.commit()
     db.refresh(employee)
 
@@ -334,11 +321,7 @@ async def update_employee(
         qr_stream = generate_qr_code(str(employee.uuid))
         background_tasks.add_task(send_qr_code_via_email, employee.email, qr_stream)
 
-    return {
-        "message": "Employee updated successfully",
-        "uuid": str(employee.uuid),
-        "expires_at": employee.expires_at
-    }
+    return {"message": "Updated successfully", "expires_at": employee.expires_at}
 
 
 @adminRouter.delete("/employees/{employee_uid}")

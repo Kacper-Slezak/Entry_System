@@ -56,7 +56,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
     if (initialData) {
       form.setFieldsValue({
         name: initialData.name,
-        email: initialData.email
+        email: initialData.email,
       });
     }
   }, [initialData, form]);
