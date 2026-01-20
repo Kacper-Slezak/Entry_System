@@ -194,10 +194,7 @@ const EmployeesPage: React.FC = () => {
       <EmployeeActions
         record={record}
         onEdit={handleEdit}
-        onDeleteSuccess={() => {
-          // Refresh list
-          loadData();
-        }}
+        onDeleteSuccess={() => loadData()}
       />
     ),
   },
