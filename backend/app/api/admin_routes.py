@@ -302,7 +302,7 @@ async def update_employee(
 
     if expiration_date and expiration_date.strip():
         try:
-            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '-01:00'))
             employee.expires_at = parsed_date
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
