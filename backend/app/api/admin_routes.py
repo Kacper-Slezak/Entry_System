@@ -383,7 +383,7 @@ async def get_access_logs(
         response_logs.append(
             schemas.LogEntry(
                 id=log.id,
-                timestamp=log.timestamp.isoformat(),
+                timestamp=(log.timestamp + timedelta(hours=1)).isoformat(),
                 employee_name=employee_name,
                 status=log.status.value,
                 reason=log.reason,
