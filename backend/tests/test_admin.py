@@ -36,7 +36,7 @@ def test_update_employee_profile_with_photo(client, mock_db_session, mock_employ
 
     # Assertions to verify correct behavior
     assert response.status_code == 200
-    assert response.json()["message"] == "Employee updated successfully"
+    assert response.json()["message"] == "Employee profile updated successfully"
     assert mock_employee.name == "New Name"
     assert mock_db_session.commit.called
 
