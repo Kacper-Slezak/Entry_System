@@ -1,12 +1,13 @@
+import csv
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
-from app.db.models import Employee, Admin
+from app.db.models import AccessLog, Employee, Admin, AccessLogStatus
 from app.db.session import get_db
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import List, Optional
 from pydantic import BaseModel
 import uuid
@@ -353,3 +354,77 @@ async def delete_employee(employee_uid: str, db: Session = Depends(get_db), curr
     db.commit()
 
     return {"message": "Employee deleted successfully"}
+
+
+@adminRouter.get("/logs", response_model=List[schemas.LogEntry])
+async def get_access_logs(
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
+):
+    """
+    Retrieves all access logs recorded in the system.
+
+    Each log entry includes details such as timestamp, employee name,
+    access status, reason for denial (if applicable), and debug distance
+    for biometric checks.
+
+    Args:
+        db (Session): Database session.
+        current_admin (Admin): Authenticated administrator performing the request.
+
+    Returns:
+        List[schemas.LogEntry]: A list of access log entries.
+    """
+    logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
+    response_logs = []
+
+    for log in logs:
+        employee_name = log.employee.name if log.employee else "Unknown"
+        response_logs.append(
+            schemas.LogEntry(
+                id=log.id,
+                timestamp=log.timestamp.isoformat(),
+                employee_name=employee_name,
+                status=log.status.value,
+                reason=log.reason,
+                employee_email=log.employee.email if log.employee else None,
+                debug_distance=log.debug_distance
+            )
+        )
+
+    return response_logs
+
+
+@adminRouter.get("/logs/export")
+async def export_logs_csv(
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(security.get_current_active_admin)
+):
+    """
+    Generates and returns a CSV file containing all access logs.
+    """
+    logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
+    
+    f = StringIO()
+    writer = csv.writer(f)
+    
+    writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason", "Distance"])
+    
+    for log in logs:
+        employee_name = log.employee.name if log.employee else "Unknown"
+        employee_email = log.employee.email if log.employee else "N/A"
+        
+        writer.writerow([
+            log.id,
+            log.timestamp.isoformat(),
+            employee_name,
+            employee_email,
+            log.status.value,
+            log.reason or "N/A",
+            log.debug_distance
+        ])
+    
+    response = Response(content=f.getvalue(), media_type="text/csv")
+    response.headers["Content-Disposition"] = f"attachment; filename=access_report_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+    
+    return response

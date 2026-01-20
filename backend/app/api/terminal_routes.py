@@ -48,7 +48,17 @@ async def verify_access(
         uid_obj = uuid.UUID(employee_uid)
     except ValueError:
         logger.warning(f"Invalid UUID format received: {employee_uid}")
-        return {"access": "DENIED", "reason": "INVALID_UUID_FORMAT"}
+        
+        log = AccessLog(
+            status=AccessLogStatus.DENIED_QR,
+            employee_id=None,
+            reason="QR_INVALID_FORMAT"
+        )
+        db.add(log)
+        db.commit()
+
+        return {"access": "DENIED", "reason": "QR_INVALID_FORMAT"}
+    
 
     # 2. Fetch Employee
     employee = db.query(Employee).filter(Employee.uuid == uid_obj).first()
@@ -58,7 +68,8 @@ async def verify_access(
         logger.info(f"Access denied (QR): Unknown or inactive employee {employee_uid}")
         log = AccessLog(
             status=AccessLogStatus.DENIED_QR,
-            employee_id=uid_obj if employee else None
+            employee_id=uid_obj if employee else None,
+            reason="QR_INVALID_OR_INACTIVE"
         )
         db.add(log)
         db.commit()
@@ -82,7 +93,8 @@ async def verify_access(
             logger.warning(f"Biometrics failed: No face detected for {employee.name}")
             log = AccessLog(
                 status=AccessLogStatus.DENIED_FACE,
-                employee_id=employee.uuid
+                employee_id=employee.uuid,
+                reason="NO_FACE_DETECTED"
             )
             db.add(log)
             db.commit()
@@ -99,7 +111,8 @@ async def verify_access(
             # SUCCESS
             log = AccessLog(
                 status=AccessLogStatus.GRANTED,
-                employee_id=employee.uuid
+                employee_id=employee.uuid,
+                reason="SUCCESS"
             )
             db.add(log)
             db.commit()
@@ -113,7 +126,8 @@ async def verify_access(
             logger.info(f"Access denied (Face): Distance {distance:.4f} too high for {employee.name}")
             log = AccessLog(
                 status=AccessLogStatus.DENIED_FACE,
-                employee_id=employee.uuid
+                employee_id=employee.uuid,
+                reason="FACE_MISMATCH"
             )
             db.add(log)
             db.commit()
