@@ -18,7 +18,7 @@ const EditEmployee: React.FC = () => {
   useEffect(() => {
     // Get employee from navigation state first
     const passedEmployee = (location.state as any)?.employee;
-    
+
     if (passedEmployee) {
       setEmployee(passedEmployee);
       setLoading(false);
@@ -38,7 +38,7 @@ const EditEmployee: React.FC = () => {
       const formData = new FormData();
       if (values.name) formData.append('name', values.name);
       if (values.email) formData.append('email', values.email);
-      if (values.expirationTime) formData.append('expirationTime', values.expirationTime.toISOString());
+      if (values.expirationTime) formData.append('expiration_date', values.expirationTime.toISOString());
 
       if (values.photo && values.photo.length > 0) {
         const file = (values.photo[0] as any).originFileObj;
@@ -50,7 +50,7 @@ const EditEmployee: React.FC = () => {
       await updateEmployee(uuid, formData, token);
       message.success('Employee updated successfully');
       navigate('/employees');
-      
+
     } catch (error) {
       console.error('Error:', error);
       throw error;

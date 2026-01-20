@@ -40,7 +40,7 @@ const EmployeesPage: React.FC = () => {
   const searchInput = useRef<InputRef>(null);
   const navigate = useNavigate();
 
-  
+
   const loadData = async () => {
     const data = await fetchEmployeesList();
     setEmployees(data);
@@ -201,7 +201,7 @@ const EmployeesPage: React.FC = () => {
 
   ];
 
-  return( 
+  return(
     <Spin spinning={loading}>
       <Table<EmployeeDataType> columns={columns} dataSource={employees} />
     </Spin>

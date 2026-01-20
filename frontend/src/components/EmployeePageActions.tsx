@@ -11,9 +11,9 @@ import Cookies from 'js-cookie';
     onDeleteSuccess: () => void;
     }
 
-const EmployeeActions: React.FC<EmployeeActionsProps> = ({ 
-  record, 
-  onEdit, 
+const EmployeeActions: React.FC<EmployeeActionsProps> = ({
+  record,
+  onEdit,
   onDeleteSuccess
 }) => {
   const handleDelete = async () => {
@@ -34,9 +34,9 @@ const EmployeeActions: React.FC<EmployeeActionsProps> = ({
 
   return (
     <Space size="small">
-      <Button 
-        type="primary" 
-        size="small" 
+      <Button
+        type="primary"
+        size="small"
         icon={<EditOutlined />}
         onClick={() => onEdit(record)}
       >
@@ -49,9 +49,9 @@ const EmployeeActions: React.FC<EmployeeActionsProps> = ({
         okText="Yes"
         cancelText="No"
       >
-        <Button 
-          danger 
-          size="small" 
+        <Button
+          danger
+          size="small"
           icon={<DeleteOutlined />}
         >
           Delete

@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
       const formData = new URLSearchParams();
       formData.append('username', values.username);
       formData.append('password', values.password);
-      
+
       const response = await fetch('http://localhost:8000/admin/login', {
         method: 'POST',
         headers: {
@@ -83,7 +83,7 @@ const LoginPage: React.FC = () => {
         <Title level={2} style={{ textAlign: 'center', marginBottom: 24, color: '#1890ff' }}>
           Login
         </Title>
-        
+
         <Form
           ref={formRef}
           name="login"

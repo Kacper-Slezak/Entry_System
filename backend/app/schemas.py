@@ -9,3 +9,12 @@ class AdminLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class LogEntry(BaseModel):
+    id: int
+    timestamp: str
+    employee_name: str
+    status: str
+    reason: str | None = None
+    employee_email: str | None = None
+    debug_distance: float | None = None

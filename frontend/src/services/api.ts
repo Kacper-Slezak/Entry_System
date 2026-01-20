@@ -84,11 +84,11 @@ export const fetchEmployeesList = async () => {
 
   try {
     const data = await fetchEmployees(token);
-  
-    return data; 
+
+    return data;
   } catch (error) {
     console.error('Error fetching employees:', error);
     message.error('Failed to load employees');
-    return []; 
+    return [];
   }
 };

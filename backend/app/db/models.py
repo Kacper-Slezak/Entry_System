@@ -1,7 +1,7 @@
 import uuid
 import enum
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Enum as SqlEnum, PickleType
+from sqlalchemy import Column, Float, String, Integer, Boolean, DateTime, ForeignKey, Enum as SqlEnum, PickleType
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.session import Base
@@ -38,13 +38,17 @@ class AccessLog(Base):
     __tablename__ = "access_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now, nullable=False)
 
     # Entry status
     status = Column(SqlEnum(AccessLogStatus), nullable=False)
+
+    reason = Column(String, nullable=True)
 
     # Related key with employees table
     employee_id = Column(UUID(as_uuid=True), ForeignKey("employees.uuid"), nullable=True)
 
     # Relation back
     employee = relationship("Employee", back_populates="logs")
+
+    debug_distance = Column(Float, nullable=True)

@@ -5,32 +5,43 @@ import {
   UploadOutlined,
   UserOutlined,
   DashboardOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
-import { Link } from 'react-router-dom';
-import styles from '../styles/LayoutMain.module.css';
+import { Link, useLocation } from 'react-router-dom';
 
 const { Header, Sider, Content } = Layout;
 
 const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
   const {
-    token: { colorBgContainer },
+    token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+  // Mapowanie ścieżek do kluczy menu, aby podświetlał się aktywny element
+  const getSelectedKey = () => {
+    const path = location.pathname;
+    if (path === '/') return ['1'];
+    if (path === '/add-employee') return ['2'];
+    if (path === '/employees') return ['3'];
+    if (path === '/logs') return ['4'];
+    return ['1'];
+  };
+
   return (
-    <Layout className={styles.layout}>
+    <Layout style={{ width: '100%', height: '100%' }}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"
           mode="inline"
-          // defaultSelectedKeys={['1']}
+          selectedKeys={getSelectedKey()}
           items={[
             {
               key: '1',
               icon: <DashboardOutlined />,
-              label: <Link to="/">Logs</Link>
+              label: <Link to="/">Dashboard</Link>
             },
             {
               key: '2',
@@ -42,19 +53,36 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
               icon: <UserOutlined />,
               label: <Link to="/employees">Employees</Link>,
             },
+            {
+              key: '4',
+              icon: <FileTextOutlined />,
+              label: <Link to="/logs">Logs</Link>,
+            },
           ]}
         />
       </Sider>
       <Layout>
-        <Header className={styles.header} style={{ background: colorBgContainer }}>
+        <Header style={{ padding: 0, background: colorBgContainer }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            className={styles.toggleButton}
+            style={{
+              fontSize: '16px',
+              width: 64,
+              height: 64,
+            }}
           />
         </Header>
-        <Content className={styles.content}>
+        <Content
+          style={{
+            margin: '24px 16px',
+            padding: 24,
+            minHeight: 280,
+            background: colorBgContainer,
+            borderRadius: borderRadiusLG,
+          }}
+        >
           {children}
         </Content>
       </Layout>
