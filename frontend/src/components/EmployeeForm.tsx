@@ -100,7 +100,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({
       </Form.Item>
       <Form.Item
         label="Expiration Date"
-        name="expiration_date"
+        name="expirationTime"
         rules={formRules.expirationTime}
       >
         <DatePicker showTime/>

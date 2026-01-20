@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -115,29 +115,29 @@ async def create_employee(
     photo_bytes = await photo.read()
     embedding = generate_face_embedding(photo_bytes)
 
-    if embedding is None:
-        raise HTTPException(status_code=400, detail="No face detected in the provided photo.")
-
-    # 3. Handle Expiration Date
-    # If no date is provided by frontend, default to 182 days from now
-    
     if expiration_date is None:
-        expiration_date = datetime.now() + timedelta(days=182)
+        expiration_date = datetime.utcnow() + timedelta(days=182)
     else:
-        clean_date = expiration_date.replace("Z", "+00:00")
+        # Remove any timezone indicators
+        clean_date = expiration_date.replace("Z", "").replace("+00:00", "").strip()
         expiration_date = datetime.fromisoformat(clean_date)
 
-    if expiration_date <= datetime.now():
+        # DEBUG - Print what we're comparing
+        print(f"DEBUG: Parsed expiration_date: {expiration_date}")
+        print(f"DEBUG: Type: {type(expiration_date)}")
+        print(f"DEBUG: Current time: {datetime.utcnow()}")
+        print(f"DEBUG: Comparison result: {expiration_date > datetime.utcnow()}")
+
+    # Ensure the date is in the future
+    if expiration_date <= datetime.utcnow():
         raise HTTPException(status_code=400, detail="Expiration date must be in the future.")
-    if expiration_date == datetime.now():
-        is_active_1 = False
 
     # 4. Create Database Record
     new_employee = Employee(
         name=name,
         email=email,
         embedding=embedding,
-        is_active=is_active_1,
+        is_active=True,
         expires_at=expiration_date
     )
 
@@ -238,6 +238,7 @@ async def update_employee_status(
 @adminRouter.put("/employees/{employee_uid}")
 async def update_employee(
     employee_uid: str,
+    background_tasks: BackgroundTasks,
     name: Optional[str] = Form(None),
     email: Optional[str] = Form(None),
     photo: UploadFile = File(None),
@@ -280,47 +281,45 @@ async def update_employee(
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # 1. Update basic information
+    needs_new_qr = False
+
     if name:
         employee.name = name
 
-    if email:
-        # Verify that the new email is not already claimed by another employee
+    if email and email != employee.email:
         existing = db.query(Employee).filter(Employee.email == email, Employee.uuid != uid_obj).first()
         if existing:
-            raise HTTPException(status_code=400, detail="Email already in use by another employee")
+            raise HTTPException(status_code=400, detail="Email already in use")
         employee.email = email
+        needs_new_qr = True
 
-    # 2. Update administrative status and expiration
     if is_active is not None:
         employee.is_active = is_active
 
-    if expiration_date is not None:
-        clean_date = expiration_date.replace("Z", "+00:00")
-        expiration_date = datetime.fromisoformat(clean_date)
-        employee.expires_at = expiration_date
-        
 
-    # 3. Handle photo upload and biometric embedding update
+    if expiration_date and expiration_date.strip():
+        try:
+            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            employee.expires_at = parsed_date
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date: {expiration_date}")
+
     if photo:
         photo_bytes = await photo.read()
         if photo_bytes:
-            # Generate new biometric vector using the specialized service
             new_embedding = generate_face_embedding(photo_bytes)
-
-            if new_embedding is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Biometric update failed: No face detected in the provided image."
-                )
-
-            employee.embedding = new_embedding
-
+            if new_embedding:
+                employee.embedding = new_embedding
+                needs_new_qr = True
     db.commit()
     db.refresh(employee)
 
+    if needs_new_qr:
+        qr_stream = generate_qr_code(str(employee.uuid))
+        background_tasks.add_task(send_qr_code_via_email, employee.email, qr_stream)
+
     return {
-        "message": "Employee profile updated successfully",
+        "message": "Employee updated successfully",
         "uuid": str(employee.uuid),
         "expires_at": employee.expires_at
     }

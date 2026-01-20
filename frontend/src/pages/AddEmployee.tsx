@@ -25,7 +25,7 @@ const AddEmployee: React.FC = () => {
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('email', values.email);
-      formData.append('expiration_date', dayjs(values.expirationTime).toISOString());
+      formData.append('expiration_date', dayjs(values.expirationTime).format('YYYY-MM-DD HH:mm:ss'));
 
       values.photo?.forEach((fileItem: any) => {
         formData.append('photo', fileItem.originFileObj);
