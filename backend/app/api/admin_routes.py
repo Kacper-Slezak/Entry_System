@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -244,6 +244,7 @@ async def update_employee_status(
 @adminRouter.put("/employees/{employee_uid}")
 async def update_employee(
     employee_uid: str,
+    background_tasks: BackgroundTasks,
     name: Optional[str] = Form(None),
     email: Optional[str] = Form(None),
     photo: UploadFile = File(None),
@@ -286,17 +287,18 @@ async def update_employee(
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # 1. Update basic information
+    needs_new_qr = False
+
     if name:
         employee.name = name
 
     if email:
         existing = db.query(Employee).filter(Employee.email == email, Employee.uuid != uid_obj).first()
         if existing:
-            raise HTTPException(status_code=400, detail="Email already in use by another employee")
+            raise HTTPException(status_code=400, detail="Email already in use")
         employee.email = email
+        needs_new_qr = True
 
-    # 2. Update administrative status and expiration
     if is_active is not None:
         employee.is_active = is_active
 
@@ -311,25 +313,29 @@ async def update_employee(
                 detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
             )
 
-    # 3. Handle photo upload and biometric embedding update
+    if expiration_date and expiration_date.strip():
+        try:
+            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            employee.expires_at = parsed_date
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date: {expiration_date}")
+
     if photo:
         photo_bytes = await photo.read()
         if photo_bytes:
             new_embedding = generate_face_embedding(photo_bytes)
-
-            if new_embedding is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Biometric update failed: No face detected in the provided image."
-                )
-
-            employee.embedding = new_embedding
-
+            if new_embedding:
+                employee.embedding = new_embedding
+                needs_new_qr = True
     db.commit()
     db.refresh(employee)
 
+    if needs_new_qr:
+        qr_stream = generate_qr_code(str(employee.uuid))
+        background_tasks.add_task(send_qr_code_via_email, employee.email, qr_stream)
+
     return {
-        "message": "Employee profile updated successfully",
+        "message": "Employee updated successfully",
         "uuid": str(employee.uuid),
         "expires_at": employee.expires_at
     }

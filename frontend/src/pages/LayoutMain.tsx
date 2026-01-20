@@ -8,28 +8,29 @@ import {
 } from '@ant-design/icons';
 import { Button, Layout, Menu, theme } from 'antd';
 import { Link } from 'react-router-dom';
+import styles from '../styles/LayoutMain.module.css';
 
 const { Header, Sider, Content } = Layout;
 
 const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   const [collapsed, setCollapsed] = useState(false);
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer },
   } = theme.useToken();
 
   return (
-    <Layout style={{ width: '100%', height: '100%' }}>
+    <Layout className={styles.layout}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
         <div className="demo-logo-vertical" />
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['1']}
+          // defaultSelectedKeys={['1']}
           items={[
             {
               key: '1',
               icon: <DashboardOutlined />,
-              label: <Link to="/">Dashboard</Link>
+              label: <Link to="/">Logs</Link>
             },
             {
               key: '2',
@@ -45,27 +46,15 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }}>
+        <Header className={styles.header} style={{ background: colorBgContainer }}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: '16px',
-              width: 64,
-              height: 64,
-            }}
+            className={styles.toggleButton}
           />
         </Header>
-        <Content
-          style={{
-            margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
-            background: colorBgContainer,
-            borderRadius: borderRadiusLG,
-          }}
-        >
+        <Content className={styles.content}>
           {children}
         </Content>
       </Layout>
