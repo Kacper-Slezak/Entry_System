@@ -18,4 +18,3 @@ class LogEntry(BaseModel):
     reason: str | None = None
     employee_email: str | None = None
     debug_distance: float | None = None
-    

@@ -64,7 +64,7 @@ const Logs: React.FC = () => {
   const exportLogs = async () => {
   try {
     const token = Cookies.get('access_token'); // Zmiana tutaj
-    
+
     if (!token) {
       message.error('Authorization token missing. Please log in again.');
       return;
@@ -75,7 +75,7 @@ const Logs: React.FC = () => {
     const response = await fetch('http://localhost:8000/admin/logs/export', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`, 
+        'Authorization': `Bearer ${token}`,
       },
     });
 

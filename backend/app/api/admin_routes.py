@@ -404,16 +404,16 @@ async def export_logs_csv(
     Generates and returns a CSV file containing all access logs.
     """
     logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
-    
+
     f = StringIO()
     writer = csv.writer(f)
-    
+
     writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason", "Distance"])
-    
+
     for log in logs:
         employee_name = log.employee.name if log.employee else "Unknown"
         employee_email = log.employee.email if log.employee else "N/A"
-        
+
         writer.writerow([
             log.id,
             log.timestamp.isoformat(),
@@ -423,8 +423,8 @@ async def export_logs_csv(
             log.reason or "N/A",
             log.debug_distance
         ])
-    
+
     response = Response(content=f.getvalue(), media_type="text/csv")
     response.headers["Content-Disposition"] = f"attachment; filename=access_report_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-    
+
     return response

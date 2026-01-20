@@ -48,7 +48,7 @@ async def verify_access(
         uid_obj = uuid.UUID(employee_uid)
     except ValueError:
         logger.warning(f"Invalid UUID format received: {employee_uid}")
-        
+
         log = AccessLog(
             status=AccessLogStatus.DENIED_QR,
             employee_id=None,
@@ -58,7 +58,7 @@ async def verify_access(
         db.commit()
 
         return {"access": "DENIED", "reason": "QR_INVALID_FORMAT"}
-    
+
 
     # 2. Fetch Employee
     employee = db.query(Employee).filter(Employee.uuid == uid_obj).first()
