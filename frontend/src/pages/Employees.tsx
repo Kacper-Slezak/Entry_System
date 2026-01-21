@@ -12,6 +12,7 @@ import { data, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
 
+
 type DataIndex = keyof EmployeeDataType;
 
 
@@ -38,7 +39,6 @@ const EmployeesPage: React.FC = () => {
       }
       const data = await fetchEmployees(token);
       setEmployees(data);
-      console.log(data); 
     } catch (error) {
       console.error("Failed to fetch employees:", error);
     } finally {
@@ -54,6 +54,7 @@ const EmployeesPage: React.FC = () => {
   const handleEdit = (record: EmployeeDataType) => {
     navigate(`/edit-employee/${record.uuid}`, { state: { employee: record } });
   };
+
   const handleAccess = (record: EmployeeDataType) => {
     const updateStatus = async (status: boolean) => {
       try {
@@ -63,21 +64,19 @@ const EmployeesPage: React.FC = () => {
           return;
         }
         await updateEmployeeStatus(record.uuid, status, token);
-        message.success('Employee access granted');
+        message.success('Employee access status updated successfully');
         setRefreshKey((prev) => prev + 1);
       } catch (error) {
         console.error('Error updating employee status:', error);
         message.error('Failed to update employee status');
       }
     };
-    
-    if (record.is_active===true) {
-      updateStatus(false);
-    }else{
-      updateStatus(true);
-    }
-  }
 
+    const status = !record.is_active;
+    updateStatus(status);
+
+  }
+  
   const handleSearch = (
     selectedKeys: string[],
     confirm: FilterDropdownProps['confirm'],

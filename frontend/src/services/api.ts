@@ -83,6 +83,7 @@ export const updateEmployeeStatus = async (
     method: 'PATCH',
     headers: {
       'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({employee_uuid: uuid, is_active: status }),
   });
