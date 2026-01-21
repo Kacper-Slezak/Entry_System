@@ -8,12 +8,14 @@ import Cookies from 'js-cookie';
     interface EmployeeActionsProps {
     record: EmployeeDataType;
     onEdit: (record: EmployeeDataType) => void;
+    onAccess: (record: EmployeeDataType) => void;
     onDeleteSuccess: () => void;
     }
 
 const EmployeeActions: React.FC<EmployeeActionsProps> = ({
   record,
   onEdit,
+  onAccess,
   onDeleteSuccess
 }) => {
   const handleDelete = async () => {
@@ -41,6 +43,14 @@ const EmployeeActions: React.FC<EmployeeActionsProps> = ({
         onClick={() => onEdit(record)}
       >
         Edit
+      </Button>
+      <Button
+        type="primary"
+        size="small"
+        icon={<EditOutlined />}
+        onClick={() => onAccess(record)}
+      >
+        Access
       </Button>
       <Popconfirm
         title="Delete employee"

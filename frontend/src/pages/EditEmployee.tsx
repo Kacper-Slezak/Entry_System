@@ -6,6 +6,7 @@ import { updateEmployee } from '../services/api';
 import EmployeeForm from '../components/EmployeeForm';
 import styles from '../styles/AddEmployee.module.css';
 import Cookies from 'js-cookie';
+import dayjs from 'dayjs';
 
 const EditEmployee: React.FC = () => {
   const { uuid } = useParams<{ uuid: string }>();
@@ -72,6 +73,17 @@ const EditEmployee: React.FC = () => {
             onFinish={handleFormSubmit}
             isLoading={isSubmitting}
             submitButtonText="Submit"
+            formRules={{ expirationTime: [{
+                  validator: (_: any, value: dayjs.Dayjs | null) => {
+                    if (!value) {
+                      return Promise.resolve();
+                    }
+                    if (value.isAfter(dayjs())) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error('Date must be later than right now!'));
+                  }
+                }] }}
           />
         )}
       </Card>
