@@ -24,9 +24,12 @@ def test_update_employee_profile_with_photo(client, mock_db_session, mock_employ
     # Second call: check if the new email is already in use (should return None)
     mock_db_session.query().filter().first.side_effect = [mock_employee, None]
 
-    with patch("app.api.admin_routes.generate_face_embedding") as mock_emb:
+    with patch("app.api.admin_routes.generate_face_embedding") as mock_emb, \
+         patch("app.api.admin_routes.send_qr_code_via_email") as mock_email:
         # Mocking the 512-D vector return value from the biometric service
         mock_emb.return_value = [0.9, 0.8, 0.7]
+        # Mocking email sending to do nothing (just pass)
+        mock_email.return_value = None
 
         response = client.put(
             f"/admin/employees/{mock_employee.uuid}",
@@ -36,7 +39,7 @@ def test_update_employee_profile_with_photo(client, mock_db_session, mock_employ
 
     # Assertions to verify correct behavior
     assert response.status_code == 200
-    assert response.json()["message"] == "Employee profile updated successfully"
+    assert response.json()["message"] == "Updated successfully"
     assert mock_employee.name == "New Name"
     assert mock_db_session.commit.called
 
