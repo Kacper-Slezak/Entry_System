@@ -51,4 +51,4 @@ class AccessLog(Base):
     # Relation back
     employee = relationship("Employee", back_populates="logs")
 
-    debug_distance = Column(Float, nullable=True)
+    debug_distance = Column(Float, nullable=True, default=0.0)

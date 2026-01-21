@@ -365,8 +365,7 @@ async def get_access_logs(
     Retrieves all access logs recorded in the system.
 
     Each log entry includes details such as timestamp, employee name,
-    access status, reason for denial (if applicable), and debug distance
-    for biometric checks.
+    access status, reason for denial (if applicable).
 
     Args:
         db (Session): Database session.
@@ -388,7 +387,6 @@ async def get_access_logs(
                 status=log.status.value,
                 reason=log.reason,
                 employee_email=log.employee.email if log.employee else None,
-                debug_distance=log.debug_distance
             )
         )
 
@@ -406,9 +404,9 @@ async def export_logs_csv(
     logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
 
     f = StringIO()
-    writer = csv.writer(f)
+    writer = csv.writer(f, delimiter=';')
 
-    writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason", "Distance"])
+    writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason"])
 
     for log in logs:
         employee_name = log.employee.name if log.employee else "Unknown"
@@ -421,7 +419,6 @@ async def export_logs_csv(
             employee_email,
             log.status.value,
             log.reason or "N/A",
-            log.debug_distance
         ])
 
     response = Response(content=f.getvalue(), media_type="text/csv")
