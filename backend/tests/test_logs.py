@@ -130,3 +130,4 @@ def test_log_saved_on_invalid_uuid_format(client, mock_db_session):
     assert saved_log.employee_id is None
 
     assert saved_log.debug_distance is None
+    
