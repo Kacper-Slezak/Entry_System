@@ -74,21 +74,21 @@ export const updateEmployee = async (
     return response.json();
 };
 
-export const fetchEmployeesList = async () => {
-  const token = Cookies.get('access_token');
-
-  if (!token) {
-    message.error('No authentication token found');
-    return [];
-  }
-
-  try {
-    const data = await fetchEmployees(token);
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching employees:', error);
-    message.error('Failed to load employees');
-    return [];
-  }
+export const updateEmployeeStatus = async (
+  uuid: string,
+  status: boolean,
+  token: string,
+): Promise<{ message: string }> => {
+  const response = await fetch(`${API_BASE_URL}/admin/employees/${uuid}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({employee_uuid: uuid, is_active: status }),
+  });
+    if (!response.ok) {
+    throw new Error('Failed to update employee status');
+    }
+    return response.json();
 };
