@@ -86,7 +86,7 @@ from datetime import datetime, timedelta
 def test_verify_access_inactive_employee(client, mock_db_session, mock_employee):
     """
     Test ensuring access is denied for an inactive employee.
-    
+
     GIVEN: An employee exists in the database but is_active is set to False.
     WHEN: A verification request is sent.
     THEN: The system should deny access with 'QR_INVALID_OR_INACTIVE'.
@@ -110,7 +110,7 @@ def test_verify_access_inactive_employee(client, mock_db_session, mock_employee)
 def test_verify_access_expired_employee(client, mock_db_session, mock_employee):
     """
     Test ensuring access is denied for an employee whose account has expired.
-    
+
     GIVEN: An employee exists but their expiration date was in the past.
     WHEN: A verification request is sent.
     THEN: The system should deny access with 'QR_INVALID_OR_INACTIVE'.
