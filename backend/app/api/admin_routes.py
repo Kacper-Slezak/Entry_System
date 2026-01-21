@@ -411,7 +411,7 @@ async def export_logs_csv(
     logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
 
     f = StringIO()
-    writer = csv.writer(f)
+    writer = csv.writer(f, delimiter=";")
 
     writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason", "Distance"])
 
