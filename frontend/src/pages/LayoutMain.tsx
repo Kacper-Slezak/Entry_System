@@ -22,10 +22,9 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
   // Mapowanie ścieżek do kluczy menu, aby podświetlał się aktywny element
   const getSelectedKey = () => {
     const path = location.pathname;
-    if (path === '/') return ['1'];
-    if (path === '/add-employee') return ['2'];
-    if (path === '/employees') return ['3'];
-    if (path === '/logs') return ['4'];
+    if (path === '/logs') return ['1'];
+    if (path === '/employees') return ['2'];
+    if (path === '/add-employee') return ['3'];
     return ['1'];
   };
 
@@ -40,23 +39,18 @@ const LayoutMain: React.FC<{children: React.ReactNode}> = ({children}) => {
           items={[
             {
               key: '1',
-              icon: <DashboardOutlined />,
-              label: <Link to="/">Dashboard</Link>
+              icon: <FileTextOutlined />,
+              label: <Link to="/logs">Logs</Link>,
             },
             {
               key: '2',
-              icon: <UploadOutlined />,
-              label: <Link to="/add-employee">Add Employee</Link>,
-            },
-            {
-              key: '3',
               icon: <UserOutlined />,
               label: <Link to="/employees">Employees</Link>,
             },
             {
-              key: '4',
-              icon: <FileTextOutlined />,
-              label: <Link to="/logs">Logs</Link>,
+              key: '3',
+              icon: <UploadOutlined />,
+              label: <Link to="/add-employee">Add Employee</Link>,
             },
           ]}
         />

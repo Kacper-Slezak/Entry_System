@@ -5,56 +5,74 @@ import { Button, Input, Space, Table, message, Spin} from 'antd';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 import Highlighter from 'react-highlight-words';
 import type  { EmployeeDataType } from '../types';
-import {fetchEmployees} from "../services/api";
+import {fetchEmployees,updateEmployeeStatus} from "../services/api";
 import dayjs from 'dayjs';
 import EmployeeActions from '../components/EmployeePageActions';
-import { useNavigate } from 'react-router-dom';
+import { data, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
-import { fetchEmployeesList } from '../services/api';
+
 
 type DataIndex = keyof EmployeeDataType;
 
-const mockEmployees: EmployeeDataType[] = [
-  {
-    uuid: '1',
-    name: 'John Doe',
-    email: '<EMAIL>',
-    is_active: true,
-    expires_at: '2024-12-31T23:59:59Z',
-
-  },
-  {
-    uuid: '2',
-    name: '<NAME>',
-    email: '<EMAIL>',
-    is_active: false,
-    expires_at: '2024-12-31T23:59:59Z',
-  },
-];
 
 const EmployeesPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [searchedColumn, setSearchedColumn] = useState('');
   const [employees, setEmployees] = useState<EmployeeDataType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   const searchInput = useRef<InputRef>(null);
   const navigate = useNavigate();
 
 
-  const loadData = async () => {
-    const data = await fetchEmployeesList();
-    setEmployees(data);
-    setLoading(false);
-  };
+
 
   // ---------Fething Employees List on Component Mount---------
   useEffect(() => {
-  loadData();
-}, []);
+    const getData = async () => {
+    try {
+      const token = Cookies.get('access_token');
+      if (!token) {
+        message.error('No authentication token found');
+        return;
+      }
+      const data = await fetchEmployees(token);
+      setEmployees(data);
+      console.log(data); 
+    } catch (error) {
+      console.error("Failed to fetch employees:", error);
+    } finally {
+      setLoading(false);
+      
+    }
+  }
+    getData();
+
+    
+  }, [refreshKey]);
 
   const handleEdit = (record: EmployeeDataType) => {
     navigate(`/edit-employee/${record.uuid}`, { state: { employee: record } });
   };
+  const handleAccess = (record: EmployeeDataType) => {
+    const updateStatus = async (status: boolean) => {
+      try {
+        const token = Cookies.get('access_token');
+        if (!token) {
+          message.error('No authentication token found');
+          return;
+        }
+        await updateEmployeeStatus(record.uuid, status, token);
+        message.success('Employee access granted');
+        setRefreshKey((prev) => prev + 1);
+      } catch (error) {
+        console.error('Error updating employee status:', error);
+        message.error('Failed to update employee status');
+      }
+    };
+    const status = !record.is_active;
+    updateStatus(status);
+  }
 
   const handleSearch = (
     selectedKeys: string[],
@@ -171,7 +189,7 @@ const EmployeesPage: React.FC = () => {
       key: 'is_active',
       width: '5%',
       ...getColumnSearchProps('is_active'),
-      render: (isActive: boolean) => isActive ? 'Yes' : 'No',
+      render: (is_active: boolean) => is_active ? 'Yes' : 'No',
     },
     {
       title: 'Expiration Date',
@@ -194,7 +212,8 @@ const EmployeesPage: React.FC = () => {
       <EmployeeActions
         record={record}
         onEdit={handleEdit}
-        onDeleteSuccess={() => loadData()}
+        onAccess={handleAccess}
+        onDeleteSuccess={() => setRefreshKey((prev) => prev + 1)}
       />
     ),
   },

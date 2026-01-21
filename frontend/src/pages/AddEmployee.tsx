@@ -67,6 +67,17 @@ const employeeFormRules = {
   ],
   expirationTime: [
     { required: true, message: 'Please select expiration time!' },
+    {
+      validator: (_: any, value: dayjs.Dayjs | null) => {
+        if (!value) {
+          return Promise.resolve();
+        }
+        if (value.isAfter(dayjs())) {
+          return Promise.resolve();
+        }
+        return Promise.reject(new Error('Date must be later than right now!'));
+      },
+    },
   ],
   photo: [
     { required: true, message: 'Please upload a photo!' },

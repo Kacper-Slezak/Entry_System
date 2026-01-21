@@ -180,7 +180,7 @@ async def get_all_employees(
 @adminRouter.patch("/employees/{employee_uid}/status")
 async def update_employee_status(
     employee_uid: str,
-    is_active: Optional[bool] = Form(None),
+    is_active: Optional[str] = Form(None),
     expiration_date: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
@@ -219,6 +219,8 @@ async def update_employee_status(
         raise HTTPException(status_code=404, detail="Employee not found")
 
     # Update activity status if provided
+    is_active=bool(is_active)
+    
     if is_active is not None:
         employee.is_active = is_active
 
