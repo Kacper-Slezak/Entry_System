@@ -34,10 +34,13 @@ def generate_face_embedding(file_bytes: bytes) -> list:
             detector_backend=DETECTOR_BACKEND,
             enforce_detection=True
         )
+        if len(embedding_obj) > 1:
+            raise ValueError("MULTIPLE_FACES_DETECTED")
         return embedding_obj[0]["embedding"]
 
     except ValueError:
-        # DeepFace raises ValueError when no face is detected
+        if str(e) == "MULTIPLE_FACES_DETECTED":
+            raise e
         return None
     except Exception as e:
         logging.error(f"DeepFace processing error: {e}")

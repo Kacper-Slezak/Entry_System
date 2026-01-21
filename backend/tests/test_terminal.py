@@ -56,3 +56,25 @@ def test_verify_access_no_face_detected(client, mock_db_session, mock_employee):
         )
 
     assert response.json()["reason"] == "NO_FACE_DETECTED"
+
+def test_verify_access_multiple_faces_detected(client, mock_db_session, mock_employee):
+    """
+    Test situation: Camera sees valid employee AND someone else in the background.
+    System MUST deny access.
+    """
+    mock_db_session.query().filter().first.return_value = mock_employee
+
+    with patch("app.api.terminal_routes.generate_face_embedding") as mock_gen:
+        mock_gen.side_effect = ValueError("MULTIPLE_FACES_DETECTED")
+
+        response = client.post(
+            "/api/terminal/access-verify",
+            data={"employee_uid": str(mock_employee.uuid)},
+            files={"file": ("test_multi.jpg", b"fake_bytes", "image/jpeg")}
+        )
+
+    assert response.status_code == 200
+    json_resp = response.json()
+    assert json_resp["access"] == "DENIED"
+    assert json_resp["reason"] == "MULTIPLE_FACES"
+    assert mock_db_session.add.called

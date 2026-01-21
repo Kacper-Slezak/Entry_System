@@ -60,10 +60,10 @@ async def verify_access(
         return {"access": "DENIED", "reason": "QR_INVALID_FORMAT"}
 
 
-    # 2. Fetch Employee
+    # 2. Fetch Employee from Database
     employee = db.query(Employee).filter(Employee.uuid == uid_obj).first()
 
-    # Logic: If employee does not exist or is inactive -> Deny
+    # Logic: If employee does not exist, is inactive, or expired -> Deny access
     if not employee or not employee.is_active or (employee.expires_at and datetime.now() > employee.expires_at):
         logger.info(f"Access denied (QR): Unknown or inactive employee {employee_uid}")
         log = AccessLog(
@@ -85,10 +85,30 @@ async def verify_access(
         if not photo_bytes:
             return {"access": "DENIED", "reason": "EMPTY_IMAGE_FILE"}
 
-        # Generate embedding from the uploaded photo
-        new_embedding = generate_face_embedding(photo_bytes)
+        # Attempt to generate embedding from the uploaded photo
+        try:
+            new_embedding = generate_face_embedding(photo_bytes)
+        
+        except ValueError as e:
+            # Check for multiple faces exception (Anti-Tailgating)
+            if str(e) == "MULTIPLE_FACES_DETECTED":
+                logger.warning(f"Access denied: Multiple faces detected for {employee.name}")
+                
+                log = AccessLog(
+                    status=AccessLogStatus.DENIED_FACE,
+                    employee_id=employee.uuid,
+                    reason="MULTIPLE_FACES"
+                )
+                db.add(log)
+                db.commit()
+                
+                # Return strict denial
+                return {"access": "DENIED", "reason": "MULTIPLE_FACES"}
+            else:
+                # Other ValueErrors (e.g., no face found by DeepFace internally)
+                new_embedding = None
 
-        # Handle cases where no face is detected
+        # Handle cases where no face is detected (or other minor errors)
         if new_embedding is None:
             logger.warning(f"Biometrics failed: No face detected for {employee.name}")
             log = AccessLog(
@@ -104,11 +124,11 @@ async def verify_access(
         # Returns (is_match, distance)
         is_match, distance = verify_face(employee.embedding, new_embedding)
 
-        # --- LOGGING THE DISTANCE FOR DEBUGGING ---
+        # Log distance for debugging purposes
         logger.info(f"DEBUG: Comparison for {employee.name} | Distance: {distance:.4f} | Threshold: 0.3")
 
         if is_match:
-            # SUCCESS
+            # SUCCESS: Face matches the QR owner
             log = AccessLog(
                 status=AccessLogStatus.GRANTED,
                 employee_id=employee.uuid,
@@ -122,7 +142,7 @@ async def verify_access(
                 "message": f"Welcome, {employee.name}"
             }
         else:
-            # FACE DOES NOT MATCH
+            # FAILURE: Face does not match
             logger.info(f"Access denied (Face): Distance {distance:.4f} too high for {employee.name}")
             log = AccessLog(
                 status=AccessLogStatus.DENIED_FACE,
@@ -138,10 +158,11 @@ async def verify_access(
             }
 
     except Exception as e:
+        # Catch-all for critical errors to prevent server crash
         logger.error(f"Biometric processing critical error: {str(e)}")
         db.rollback()
         return {"access": "DENIED", "reason": "PROCESSING_ERROR"}
 
     finally:
-        # Ensure file is closed after reading
+        # Ensure file is closed after reading to free resources
         await file.close()

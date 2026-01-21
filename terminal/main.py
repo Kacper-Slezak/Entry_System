@@ -70,11 +70,12 @@ def capture_image():
                         else:
                             message = "ACCESS DENIED"
                             display_color = (0, 0, 255)
-                            # Tłumaczenie błędów na ludzki język
                             if reason == "NO_FACE_DETECTED":
                                 sub_message = "NO_FACE_DETECTED!"
                             elif reason == "FACE_MISMATCH":
                                 sub_message = "FACE_MISMATCH!"
+                            elif reason == "MULTIPLE_FACES":
+                                sub_message = "ONE PERSON ONLY!"
                             elif reason == "QR_INVALID_OR_INACTIVE":
                                 sub_message = "QR_INVALID_OR_INACTIVE!"
                             else:
