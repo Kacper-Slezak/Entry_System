@@ -38,7 +38,7 @@ def generate_face_embedding(file_bytes: bytes) -> list:
             raise ValueError("MULTIPLE_FACES_DETECTED")
         return embedding_obj[0]["embedding"]
 
-    except ValueError:
+    except ValueError as e:
         if str(e) == "MULTIPLE_FACES_DETECTED":
             raise e
         return None
