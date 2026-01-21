@@ -70,8 +70,12 @@ const EmployeesPage: React.FC = () => {
         message.error('Failed to update employee status');
       }
     };
-    const status = !record.is_active;
-    updateStatus(status);
+    
+    if (record.is_active===true) {
+      updateStatus(false);
+    }else{
+      updateStatus(true);
+    }
   }
 
   const handleSearch = (
