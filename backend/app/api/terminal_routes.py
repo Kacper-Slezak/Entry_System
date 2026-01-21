@@ -88,12 +88,12 @@ async def verify_access(
         # Attempt to generate embedding from the uploaded photo
         try:
             new_embedding = generate_face_embedding(photo_bytes)
-        
+
         except ValueError as e:
             # Check for multiple faces exception (Anti-Tailgating)
             if str(e) == "MULTIPLE_FACES_DETECTED":
                 logger.warning(f"Access denied: Multiple faces detected for {employee.name}")
-                
+
                 log = AccessLog(
                     status=AccessLogStatus.DENIED_FACE,
                     employee_id=employee.uuid,
@@ -101,7 +101,7 @@ async def verify_access(
                 )
                 db.add(log)
                 db.commit()
-                
+
                 # Return strict denial
                 return {"access": "DENIED", "reason": "MULTIPLE_FACES"}
             else:
