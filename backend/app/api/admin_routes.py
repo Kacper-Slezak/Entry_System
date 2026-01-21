@@ -112,7 +112,8 @@ async def create_employee(
 
     if expiration_date:
         try:
-            final_expiration_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            dt_utc = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            final_expiration_date = dt_utc.astimezone().replace(tzinfo=None)
         except ValueError:
             raise HTTPException(
                 status_code=400,
@@ -288,8 +289,10 @@ async def update_employee(
 
     if expiration_date and expiration_date.strip():
         try:
-            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '-01:00'))
-            employee.expires_at = parsed_date
+            dt_utc = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            pl_time = dt_utc.astimezone(timezone(timedelta(hours=1)))
+            final_expiration_date = pl_time.replace(tzinfo=None)
+            employee.expires_at = final_expiration_date
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format")
 
@@ -392,7 +395,7 @@ async def export_logs_csv(
     logs = db.query(AccessLog).order_by(AccessLog.timestamp.desc()).all()
 
     f = StringIO()
-    writer = csv.writer(f)
+    writer = csv.writer(f, delimiter=";")
 
     writer.writerow(["ID", "Timestamp", "Employee Name", "Employee Email", "Status", "Reason", "Distance"])
 

@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import Any, Dict
+from fastapi.concurrency import run_in_threadpool
 
 from app.db.session import get_db
 from app.db.models import Employee, AccessLog, AccessLogStatus
@@ -87,7 +88,7 @@ async def verify_access(
 
         # Attempt to generate embedding from the uploaded photo
         try:
-            new_embedding = generate_face_embedding(photo_bytes)
+            new_embedding = await run_in_threadpool(generate_face_embedding, photo_bytes)
 
         except ValueError as e:
             # Check for multiple faces exception (Anti-Tailgating)
@@ -158,9 +159,20 @@ async def verify_access(
             }
 
     except Exception as e:
-        # Catch-all for critical errors to prevent server crash
         logger.error(f"Biometric processing critical error: {str(e)}")
-        db.rollback()
+
+        try:
+            error_log = AccessLog(
+                status=AccessLogStatus.DENIED_FACE,
+                employee_id=employee.uuid if employee else None,
+                reason=f"SYS_ERR: {str(e)[:50]}"
+            )
+            db.add(error_log)
+            db.commit() # Próbujemy zapisać ten jeden log
+        except Exception as db_error:
+            logger.error(f"Failed to log error to DB: {db_error}")
+            db.rollback()
+
         return {"access": "DENIED", "reason": "PROCESSING_ERROR"}
 
     finally:

@@ -16,7 +16,7 @@ def capture_image():
         return
 
     last_scan_time = 0
-    scan_interval = 5
+    scan_interval = 3
     message = "Scan QR code"
     sub_message = ""
     display_color = (255, 255, 255)
