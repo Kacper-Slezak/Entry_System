@@ -1,15 +1,14 @@
 import csv
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Response, Depends, HTTPException, status, Form, UploadFile, File, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.utils import generate_qr_code, send_qr_code_via_email
 from app.services.biometric_service import generate_face_embedding
-from app.db.models import AccessLog, Employee, Admin, AccessLogStatus
+from app.db.models import AccessLog, Employee, Admin
 from app.db.session import get_db
 from io import BytesIO, StringIO
 from typing import List, Optional
-from pydantic import BaseModel
 import uuid
 
 from app.core import security
@@ -64,20 +63,9 @@ async def login_for_access_token(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-class EmployeeResponse(BaseModel):
-    uuid: uuid.UUID
-    name: str
-    email: str
-    is_active: bool
-    expires_at: Optional[datetime]  # Added to allow frontend to see the expiration date
-
-    class Config:
-        from_attributes = True
-
-
 # --- UPDATED CREATE ENDPOINT ---
 
-@adminRouter.post("/create_employee", response_model=EmployeeResponse)
+@adminRouter.post("/create_employee", response_model=schemas.EmployeeResponse)
 async def create_employee(
     background_tasks: BackgroundTasks,
     photo: UploadFile = File(...),
@@ -158,7 +146,7 @@ async def create_employee(
 
 # --- CRUD ENDPOINTS ---
 
-@adminRouter.get("/employees", response_model=List[EmployeeResponse])
+@adminRouter.get("/employees", response_model=List[schemas.EmployeeResponse])
 async def get_all_employees(
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
@@ -180,8 +168,7 @@ async def get_all_employees(
 @adminRouter.patch("/employees/{employee_uid}/status")
 async def update_employee_status(
     employee_uid: str,
-    is_active: Optional[str] = Form(None),
-    expiration_date: Optional[str] = Form(None),
+    status_data: schemas.EmployeeStatusUpdate,
     db: Session = Depends(get_db),
     current_admin: Admin = Depends(security.get_current_active_admin)
 ):
@@ -218,20 +205,17 @@ async def update_employee_status(
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Update activity status if provided
-    is_active=bool(is_active)
-    
-    if is_active is not None:
-        employee.is_active = is_active
+    if status_data.is_active is not None:
+        employee.is_active = not status_data.is_active
 
-    if expiration_date is not None:
+    if status_data.expiration_date:
         try:
-            parsed_date = datetime.fromisoformat(expiration_date.replace('Z', '+00:00'))
+            parsed_date = datetime.fromisoformat(status_data.expiration_date.replace('Z', '+00:00'))
             employee.expires_at = parsed_date
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid date format for expiration_date. Expected ISO string, got: {expiration_date}"
+                detail=f"Invalid date format. Expected ISO string, got: {status_data.expiration_date}"
             )
 
     db.commit()

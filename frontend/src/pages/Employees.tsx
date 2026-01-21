@@ -43,12 +43,12 @@ const EmployeesPage: React.FC = () => {
       console.error("Failed to fetch employees:", error);
     } finally {
       setLoading(false);
-      
+
     }
   }
     getData();
 
-    
+
   }, [refreshKey]);
 
   const handleEdit = (record: EmployeeDataType) => {
@@ -72,11 +72,10 @@ const EmployeesPage: React.FC = () => {
       }
     };
 
-    const status = !record.is_active;
-    updateStatus(status);
+    updateStatus(record.is_active);
 
   }
-  
+
   const handleSearch = (
     selectedKeys: string[],
     confirm: FilterDropdownProps['confirm'],

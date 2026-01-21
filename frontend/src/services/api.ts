@@ -92,5 +92,3 @@ export const updateEmployeeStatus = async (
     }
     return response.json();
 };
-
-
