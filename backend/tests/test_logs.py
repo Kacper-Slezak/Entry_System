@@ -1,7 +1,6 @@
 from app.db.models import AccessLog, AccessLogStatus
 from unittest.mock import patch
 
-
 def test_log_saved_correctly_on_success(client, mock_db_session, mock_employee):
     """
     Verifies that on success, a log with status GRANTED, reason 'SUCCESS',
@@ -130,4 +129,3 @@ def test_log_saved_on_invalid_uuid_format(client, mock_db_session):
     assert saved_log.employee_id is None
 
     assert saved_log.debug_distance is None
-    
