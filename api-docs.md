@@ -1,12 +1,12 @@
 # FaceOn Entry System API
 
-    ## Purpose
-    API for an advanced access control system utilizing two-factor authentication:
-    * **Possession**: QR Code generated per employee.
-    * **Inherence**: Biometric facial recognition using DeepFace.
+## Purpose
+API for an advanced access control system utilizing two-factor authentication:
+* **Possession**: QR Code generated per employee.
+* **Inherence**: Biometric facial recognition using DeepFace.
 
-    ## Access
-    Most endpoints under `/admin` require a valid JWT Bearer Token.
+## Access
+Most endpoints under `/admin` require a valid JWT Bearer Token.
 
 
 ## Version: 1.0.0

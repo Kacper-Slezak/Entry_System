@@ -48,7 +48,7 @@
 
 ***
 
-### [GET]/admin/health
+### [GET] /admin/health
 
 - Summary
 Health Check
@@ -68,7 +68,7 @@ health_check_admin_health_get
 
 ***
 
-### [GET]/admin/qr_test/{uuid_value}
+### [GET] /admin/qr_test/{uuid_value}
 
 - Summary
 Qr Test
@@ -112,7 +112,7 @@ email?: string
 
 ***
 
-### [POST]/admin/login
+### [POST] /admin/login
 
 - Summary
 Login For Access Token
@@ -170,7 +170,7 @@ Administrator Login:
 
 ***
 
-### [POST]/admin/create_employee
+### [POST] /admin/create_employee
 
 - Summary
 Create Employee
@@ -197,8 +197,8 @@ Args:
 Returns:
     EmployeeResponse: The newly created employee record.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### RequestBody
 
@@ -245,7 +245,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [GET]/admin/employees
+### [GET] /admin/employees
 
 - Summary
 Get All Employees
@@ -264,8 +264,8 @@ Returns:
     List[schemas.Employee]: A list of employee objects including their IDs,
                             names, emails, and account status.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### Responses
 
@@ -285,7 +285,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [PATCH]/admin/employees/{employee_uid}/status
+### [PATCH] /admin/employees/{employee_uid}/status
 
 - Summary
 Update Employee Status
@@ -317,8 +317,8 @@ Raises:
         - 400: If the UUID format is invalid.
         - 404: If no employee is found with the provided UUID.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### RequestBody
 
@@ -361,7 +361,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [PUT]/admin/employees/{employee_uid}
+### [PUT] /admin/employees/{employee_uid}
 
 - Summary
 Update Employee
@@ -394,8 +394,8 @@ Raises:
         - 400: Invalid UUID, email already taken, or no face detected in photo.
         - 404: Employee not found.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### RequestBody
 
@@ -438,7 +438,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [DELETE]/admin/employees/{employee_uid}
+### [DELETE] /admin/employees/{employee_uid}
 
 - Summary
 Delete Employee
@@ -460,8 +460,8 @@ Args:
 Returns:
     dict: Success message upon deletion.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### Responses
 
@@ -489,7 +489,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [GET]/admin/logs
+### [GET] /admin/logs
 
 - Summary
 Get Access Logs
@@ -501,8 +501,7 @@ get_access_logs_admin_logs_get
 Retrieves all access logs recorded in the system.
 
 Each log entry includes details such as timestamp, employee name,
-access status, reason for denial (if applicable), and debug distance
-for biometric checks.
+access status, reason for denial (if applicable).
 
 Args:
     db (Session): Database session.
@@ -511,8 +510,8 @@ Args:
 Returns:
     List[schemas.LogEntry]: A list of access log entries.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### Responses
 
@@ -528,13 +527,12 @@ OAuth2PasswordBearer
   status: string
   reason?: Partial(string) & Partial(null)
   employee_email?: Partial(string) & Partial(null)
-  debug_distance?: Partial(number) & Partial(null)
 }[]
 ```
 
 ***
 
-### [GET]/admin/logs/export
+### [GET] /admin/logs/export
 
 - Summary
 Export Logs Csv
@@ -545,8 +543,8 @@ export_logs_csv_admin_logs_export_get
 - Description
 Generates and returns a CSV file containing all access logs.
 
-- Security
-OAuth2PasswordBearer
+Security
+- OAuth2PasswordBearer
 
 #### Responses
 
@@ -560,7 +558,7 @@ OAuth2PasswordBearer
 
 ***
 
-### [POST]/api/terminal/access-verify
+### [POST] /api/terminal/access-verify
 
 - Summary
 Verify Access

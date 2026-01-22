@@ -155,7 +155,6 @@ async def verify_access(
             return {
                 "access": "DENIED",
                 "reason": "FACE_MISMATCH",
-                "debug_distance": distance
             }
 
     except Exception as e:
